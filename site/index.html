@@ -92,6 +92,21 @@
     @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
     @keyframes spin { to { --a: 360deg; } }
     @keyframes breathe { 50% { transform: scale(1.12); opacity: 0.7; } }
+    .orb.talk::after { animation-duration: 0.7s; }
+    .sound-btn { margin-left: auto; height: 22px; padding: 0 10px; border-radius: 4px; border: 1px solid var(--hair-2); background: #161618; color: var(--ink-2); font: 11px var(--mono); letter-spacing: 0.05em; cursor: pointer; }
+    .sound-btn:hover { color: var(--ink); }
+    .sound-btn.on { color: var(--gold); border-color: rgba(255, 201, 77, 0.45); }
+    .bar-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .voice { display: flex; gap: 3px; align-items: center; height: 14px; }
+    .voice b { width: 3px; height: 3px; border-radius: 2px; background: var(--gold); opacity: 0.45; }
+    .bar.you .voice b { background: #b4bac8; }
+    .bar.talking .voice b { opacity: 1; animation: vlvl 0.7s ease-in-out infinite; }
+    .bar.talking .voice b:nth-child(2) { animation-delay: -0.2s; } .bar.talking .voice b:nth-child(3) { animation-delay: -0.45s; }
+    .bar.talking .voice b:nth-child(4) { animation-delay: -0.1s; } .bar.talking .voice b:nth-child(5) { animation-delay: -0.35s; }
+    @keyframes vlvl { 0%, 100% { height: 3px; } 50% { height: 14px; } }
+    .caption { margin-top: 14px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .beta { padding: 9px 16px; text-align: center; font: 12px var(--mono); letter-spacing: 0.04em; color: var(--gold); background: rgba(255, 201, 77, 0.07); border-bottom: 1px solid rgba(255, 201, 77, 0.16); }
+    .beta span { color: var(--ink-2); }
     .target { position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 2px solid var(--gold); box-shadow: 0 0 18px rgba(255, 201, 77, 0.5); opacity: 0; transform: scale(0.6); transition: opacity 0.3s, transform 0.4s cubic-bezier(.2,.8,.3,1.4); }
     .target.on { opacity: 1; transform: scale(1); }
 
@@ -160,6 +175,7 @@
   </style>
 </head>
 <body>
+  <div class="beta">IN TESTING <span>· Halo is an early build being tested on Mac and Windows. Things will change.</span></div>
   <nav>
     <div class="wrap">
       <a class="brand" href="#"><span class="mark"></span>Halo</a>
@@ -190,7 +206,7 @@
       </div>
 
       <div class="screen reveal" aria-label="Animated example: Halo fixes the sound on a video call">
-        <div class="chrome"><i></i><i></i><i></i><div class="url">meet · family call</div></div>
+        <div class="chrome"><i></i><i></i><i></i><div class="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
         <div class="call">
           <div class="tile">
             <div class="avatar">S</div>
@@ -210,10 +226,11 @@
         <div class="target" id="target"></div>
         <div class="orb" id="orb"></div>
         <div class="bar">
-          <div class="eyebrow" id="eyebrow">Halo is listening</div>
+          <div class="bar-top"><div class="eyebrow" id="eyebrow">Halo is listening</div><div class="voice" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></div></div>
           <div class="line" id="line"></div>
         </div>
       </div>
+      <div class="caption mono"><span>An animated walkthrough of a real Halo fix</span><span>Turn on sound to hear it</span></div>
     </div>
   </header>
 
@@ -306,30 +323,86 @@
       at(el, (x / s.width) * 100, (y / s.height) * 100);
     };
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const show = (who, html) => { line.style.opacity = 0; setTimeout(() => { eyebrow.textContent = who; line.innerHTML = html; line.style.opacity = 1; }, 220); };
+    const bar = document.querySelector(".bar");
+
+    // Sound is off until the visitor turns it on (browsers block sound before a click anyway).
+    let soundOn = false;
+    let audio = null;
+    const voices = () => (window.speechSynthesis ? speechSynthesis.getVoices() : []);
+    const pickVoice = (female) => {
+      const en = voices().filter((v) => /^en[-_]/i.test(v.lang));
+      const want = female ? /(aria|jenny|ava|samantha|zira|female|google us english)/i : /(guy|davis|daniel|david|male|google uk english male)/i;
+      return en.find((v) => want.test(v.name) && /natural|online|google/i.test(v.name)) || en.find((v) => want.test(v.name)) || en[0] || null;
+    };
+    function speak(text, who) {
+      if (!soundOn || !window.speechSynthesis) return Promise.resolve();
+      return new Promise((resolve) => {
+        const u = new SpeechSynthesisUtterance(text);
+        const v = pickVoice(who !== "you");
+        if (v) u.voice = v;
+        u.rate = who === "you" ? 0.95 : 1.02;
+        u.pitch = who === "you" ? 0.9 : 1.05;
+        u.onend = u.onerror = () => resolve();
+        speechSynthesis.speak(u);
+        setTimeout(resolve, 9000); // never stall the loop on a voice that doesn't report its end
+      });
+    }
+    // A soft two-note chime when Halo finishes, made in the browser (no audio files).
+    function chime() {
+      if (!soundOn) return;
+      try {
+        audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+        [659.25, 987.77].forEach((f, i) => {
+          const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + i * 0.12;
+          o.type = "sine"; o.frequency.value = f;
+          g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+          o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 1);
+        });
+      } catch {}
+    }
+    $("sound").addEventListener("click", () => {
+      soundOn = !soundOn;
+      $("sound").classList.toggle("on", soundOn);
+      $("sound").textContent = soundOn ? "SOUND ON" : "TURN ON SOUND";
+      if (!soundOn && window.speechSynthesis) speechSynthesis.cancel();
+    });
+    if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => voices();
+
+    // Shows a line in the bar, says it (when sound is on), and waits at least `min` ms.
+    async function show(who, text, { min = 1800, kind = "halo" } = {}) {
+      line.style.opacity = 0;
+      await wait(200);
+      eyebrow.textContent = who;
+      line.innerHTML = kind === "you" ? `<span class="you">"${text}"</span>` : text;
+      line.style.opacity = 1;
+      bar.classList.toggle("you", kind === "you");
+      bar.classList.add("talking");
+      orb.classList.toggle("talk", kind !== "you");
+      await Promise.all([speak(text, kind), wait(min)]);
+      bar.classList.remove("talking");
+      orb.classList.remove("talk");
+    }
 
     async function loop() {
       while (true) {
         at(orb, 50, 62); orb.classList.remove("busy"); target.classList.remove("on");
         $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
         $("flag").style.opacity = 1; $("wave").style.opacity = 0;
-        show("You", '<span class="you">"The sound thing is broken. I can\'t hear Sam."</span>');
-        await wait(2800);
+        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you" });
         orb.classList.add("busy"); at(orb, 30, 40);
-        show("Halo is looking", "Your call is fine. The sound is going to your monitor, which has no speakers.");
-        await wait(1600);
+        eyebrow.textContent = "Halo is looking"; line.textContent = "Checking your call and your sound…";
+        await wait(1500);
         onto(orb, $("output"), "center"); $("output").classList.add("lit");
-        await wait(2000);
+        await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200 });
         orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
-        show("Halo", "I'll switch it to your laptop speakers. Okay?");
-        await wait(2400);
-        show("You", '<span class="you">"Yes."</span>');
-        await wait(1000);
+        await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000 });
+        await show("You", "Yes.", { min: 900, kind: "you" });
         target.classList.remove("on"); $("o1").classList.remove("sel"); $("o2").classList.add("sel");
         $("flag").style.opacity = 0; $("wave").style.opacity = 1;
-        show("Done", "Switched to your laptop speakers. You should hear Sam now.");
         at(orb, 50, 62);
-        await wait(3600);
+        chime();
+        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3400 });
+        await wait(800);
       }
     }
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); show("Halo", "Switched to your laptop speakers. You should hear Sam now."); }
