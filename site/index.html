@@ -328,23 +328,19 @@
     // Sound is off until the visitor turns it on (browsers block sound before a click anyway).
     let soundOn = false;
     let audio = null;
-    const voices = () => (window.speechSynthesis ? speechSynthesis.getVoices() : []);
-    const pickVoice = (female) => {
-      const en = voices().filter((v) => /^en[-_]/i.test(v.lang));
-      const want = female ? /(aria|jenny|ava|samantha|zira|female|google us english)/i : /(guy|davis|daniel|david|male|google uk english male)/i;
-      return en.find((v) => want.test(v.name) && /natural|online|google/i.test(v.name)) || en.find((v) => want.test(v.name)) || en[0] || null;
-    };
-    function speak(text, who) {
-      if (!soundOn || !window.speechSynthesis) return Promise.resolve();
+    // The lines were recorded with Halo's own voice (scripts/site-voice.py), so the page sounds like the app.
+    const clips = {};
+    for (const k of ["ask", "found", "offer", "yes", "done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
+    let playing = null;
+    function speak(key) {
+      const clip = clips[key];
+      if (!soundOn || !clip) return Promise.resolve();
       return new Promise((resolve) => {
-        const u = new SpeechSynthesisUtterance(text);
-        const v = pickVoice(who !== "you");
-        if (v) u.voice = v;
-        u.rate = who === "you" ? 0.95 : 1.02;
-        u.pitch = who === "you" ? 0.9 : 1.05;
-        u.onend = u.onerror = () => resolve();
-        speechSynthesis.speak(u);
-        setTimeout(resolve, 9000); // never stall the loop on a voice that doesn't report its end
+        playing = clip;
+        clip.currentTime = 0;
+        clip.onended = clip.onerror = () => resolve();
+        clip.play().catch(() => resolve());
+        setTimeout(resolve, 9000); // never stall the loop on a clip that doesn't report its end
       });
     }
     // A soft two-note chime when Halo finishes, made in the browser (no audio files).
@@ -364,12 +360,11 @@
       soundOn = !soundOn;
       $("sound").classList.toggle("on", soundOn);
       $("sound").textContent = soundOn ? "SOUND ON" : "TURN ON SOUND";
-      if (!soundOn && window.speechSynthesis) speechSynthesis.cancel();
+      if (!soundOn && playing) playing.pause();
     });
-    if (window.speechSynthesis) speechSynthesis.onvoiceschanged = () => voices();
 
-    // Shows a line in the bar, says it (when sound is on), and waits at least `min` ms.
-    async function show(who, text, { min = 1800, kind = "halo" } = {}) {
+    // Shows a line in the bar, plays its recording (when sound is on), and waits at least `min` ms.
+    async function show(who, text, { min = 1800, kind = "halo", clip } = {}) {
       line.style.opacity = 0;
       await wait(200);
       eyebrow.textContent = who;
@@ -378,7 +373,7 @@
       bar.classList.toggle("you", kind === "you");
       bar.classList.add("talking");
       orb.classList.toggle("talk", kind !== "you");
-      await Promise.all([speak(text, kind), wait(min)]);
+      await Promise.all([speak(clip), wait(min)]);
       bar.classList.remove("talking");
       orb.classList.remove("talk");
     }
@@ -388,20 +383,20 @@
         at(orb, 50, 62); orb.classList.remove("busy"); target.classList.remove("on");
         $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
         $("flag").style.opacity = 1; $("wave").style.opacity = 0;
-        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you" });
+        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you", clip: "ask" });
         orb.classList.add("busy"); at(orb, 30, 40);
         eyebrow.textContent = "Halo is looking"; line.textContent = "Checking your call and your sound…";
         await wait(1500);
         onto(orb, $("output"), "center"); $("output").classList.add("lit");
-        await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200 });
+        await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found" });
         orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
-        await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000 });
-        await show("You", "Yes.", { min: 900, kind: "you" });
+        await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000, clip: "offer" });
+        await show("You", "Yes.", { min: 900, kind: "you", clip: "yes" });
         target.classList.remove("on"); $("o1").classList.remove("sel"); $("o2").classList.add("sel");
         $("flag").style.opacity = 0; $("wave").style.opacity = 1;
         at(orb, 50, 62);
         chime();
-        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3400 });
+        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3400, clip: "done" });
         await wait(800);
       }
     }
