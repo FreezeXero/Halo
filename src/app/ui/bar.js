@@ -323,7 +323,8 @@
       const key = JSON.stringify(list);
       if (chips.dataset.key !== key) {
         chips.dataset.key = key;
-        chips.replaceChildren(...list.map((t) => el("button", { type: "button", class: "chip", onclick: () => submitText(t) }, t)));
+        // "Look at my screen" stands out: it is the way to ask about whatever is on screen.
+        chips.replaceChildren(...list.map((t) => el("button", { type: "button", class: t === "Look at my screen" ? "chip chip-look" : "chip", onclick: () => submitText(t) }, t)));
       }
       chips.hidden = !list.length;
       setMicLook();
@@ -881,18 +882,10 @@
     if (!text) return;
     const item = { text };
     if (msg.mode === "now") {
+      // Skip what's still waiting, but let the sentence being spoken finish: cutting it mid-word is hard to follow.
       speech.queue.length = 0;
-      const wasTalking = !!speech.current;
-      speech.current = null;
-      stopHeart();
-      clearTimeout(speech.timer);
-      if (synth && wasTalking) {
-        try { synth.cancel(); } catch { /* ignore */ }
-      }
       speech.queue.push(item);
-      // Chrome can drop a speak() that comes right after cancel(), so wait a moment.
-      speech.timer = setTimeout(next, wasTalking ? 60 : 0);
-      showCaption(text);
+      if (!speech.current) next();
       return;
     }
     speech.queue.push(item);

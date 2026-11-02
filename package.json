@@ -10,6 +10,8 @@
     "start": "npm run build && electron .",
     "demo": "tsx src/cli/demo.ts",
     "demo:pages": "tsx src/cli/serve-demo.ts",
+    "demo:break-sound": "tsx src/cli/demo-sound.ts break",
+    "demo:reset-sound": "tsx src/cli/demo-sound.ts reset",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "droid:check": "tsx src/cli/droid-check.ts",

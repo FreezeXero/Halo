@@ -68,6 +68,114 @@ export function parseVolume(out: string): { level: number | null; muted: boolean
   return { level: level ? Number(level[1]) : null, muted: muted ? muted[1] === "true" : null };
 }
 
+// ---------- Sound outputs (which device the sound plays on) ----------
+// Lists the active outputs with Core Audio, and switches the default with the IPolicyConfig interface Windows' own
+// Sound settings use (there is no PowerShell command for it).
+
+const OUTPUTS_TYPE = `Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+[StructLayout(LayoutKind.Sequential)] public struct HaloPropKey { public Guid fmtid; public int pid; }
+[StructLayout(LayoutKind.Sequential)] public struct HaloPropVar { public short vt; short r1, r2, r3; public IntPtr p; public IntPtr p2; }
+[Guid("886d8eeb-8cf2-4446-8d02-cdba1dbdcf99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IHaloPropStore { int GetCount(out int c); int GetAt(int i, out HaloPropKey k); int GetValue(ref HaloPropKey k, out HaloPropVar v); }
+[Guid("5CDF2C82-841E-4546-9722-0CF74078229A"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IHaloVol { int f(); int g(); int h(); int i(); int SetMasterVolumeLevelScalar(float l, Guid c); int j(); int GetMasterVolumeLevelScalar(out float l); int k(); int l(); int m(); int n(); int SetMute([MarshalAs(UnmanagedType.Bool)] bool b, Guid c); int GetMute(out bool b); }
+[Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IHaloDevice { int Activate(ref Guid id, int ctx, IntPtr p, [MarshalAs(UnmanagedType.IUnknown)] out object o); int OpenPropertyStore(int access, out IHaloPropStore s); int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id); int GetState(out int s); }
+[Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IHaloCollection { int GetCount(out int c); int Item(int i, out IHaloDevice d); }
+[Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IHaloEnum { int EnumAudioEndpoints(int flow, int mask, out IHaloCollection c); int GetDefaultAudioEndpoint(int flow, int role, out IHaloDevice d); int GetDevice([MarshalAs(UnmanagedType.LPWStr)] string id, out IHaloDevice d); }
+[ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")] class HaloEnumCom { }
+[Guid("f8679f50-850a-41cf-9c72-430f290290c8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+interface IHaloPolicy { int a(); int b(); int c(); int d(); int e(); int f(); int g(); int h(); int i(); int j(); int SetDefaultEndpoint([MarshalAs(UnmanagedType.LPWStr)] string id, int role); }
+[ComImport, Guid("870af99c-171d-4f9e-af0d-e63df40c2bc9")] class HaloPolicyCom { }
+public static class HaloOutputs {
+  static IHaloEnum En() { return (IHaloEnum)new HaloEnumCom(); }
+  static string Name(IHaloDevice d) {
+    IHaloPropStore s; d.OpenPropertyStore(0, out s);
+    var k = new HaloPropKey { fmtid = new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), pid = 14 };
+    HaloPropVar v; s.GetValue(ref k, out v);
+    return v.vt == 31 ? Marshal.PtrToStringUni(v.p) : "";
+  }
+  static IHaloVol Vol(IHaloDevice d) { object o; var id = typeof(IHaloVol).GUID; Marshal.ThrowExceptionForHR(d.Activate(ref id, 23, IntPtr.Zero, out o)); return (IHaloVol)o; }
+  public static string List() {
+    var e = En(); IHaloDevice def; string defId = "";
+    if (e.GetDefaultAudioEndpoint(0, 1, out def) == 0) def.GetId(out defId);
+    IHaloCollection c; Marshal.ThrowExceptionForHR(e.EnumAudioEndpoints(0, 1, out c));
+    int n; c.GetCount(out n);
+    var sb = new System.Text.StringBuilder();
+    for (int i = 0; i < n; i++) {
+      IHaloDevice d; c.Item(i, out d); string id; d.GetId(out id);
+      float lv = -1; bool mu = false; try { var v = Vol(d); v.GetMasterVolumeLevelScalar(out lv); v.GetMute(out mu); } catch {}
+      sb.Append("output|" + (id == defId ? "default" : "other") + "|" + id + "|" + (int)Math.Round(lv * 100) + "|" + (mu ? "muted" : "on") + "|" + Name(d) + "\\n");
+    }
+    return sb.ToString();
+  }
+  public static void SetDefault(string id) {
+    var p = (IHaloPolicy)new HaloPolicyCom();
+    for (int role = 0; role < 3; role++) Marshal.ThrowExceptionForHR(p.SetDefaultEndpoint(id, role));
+  }
+  public static void Unmute(string id, float atLeast) {
+    IHaloDevice d; Marshal.ThrowExceptionForHR(En().GetDevice(id, out d));
+    var v = Vol(d); v.SetMute(false, Guid.Empty);
+    float lv; v.GetMasterVolumeLevelScalar(out lv); if (lv < atLeast) v.SetMasterVolumeLevelScalar(atLeast, Guid.Empty);
+  }
+}
+'@`;
+
+export const OUTPUTS_READ = `${OUTPUTS_TYPE}\n[HaloOutputs]::List()`;
+
+export interface SoundOutput { id: string; name: string; isDefault: boolean; level: number; muted: boolean }
+
+/** A Core Audio endpoint id, e.g. {0.0.0.00000000}.{2049b039-f1cf-46b8-b284-46f1777aaf87}. Anything else is refused. */
+export function safeOutputId(id: string): boolean {
+  return /^\{[0-9.]+\}\.\{[0-9a-f-]{36}\}$/i.test(id);
+}
+
+/** Makes this output the default for everything, unmutes it and brings a near-silent volume up, then lists again. */
+export function outputSwitch(id: string, minLevel = 40): string {
+  if (!safeOutputId(id)) throw new Error("not a sound output id");
+  const quoted = psQuote(id);
+  return `${OUTPUTS_TYPE}\n[HaloOutputs]::SetDefault(${quoted})\n[HaloOutputs]::Unmute(${quoted}, ${(Math.max(0, Math.min(100, minLevel)) / 100).toFixed(2)})\n[HaloOutputs]::List()`;
+}
+
+export function parseOutputs(out: string): SoundOutput[] {
+  return out.split(/\r?\n/).flatMap((line) => {
+    const m = /^output\|(default|other)\|([^|]+)\|(-?\d+)\|(muted|on)\|(.*)$/.exec(line.trim());
+    return m ? [{ id: m[2], name: m[5].trim(), isDefault: m[1] === "default", level: Number(m[3]), muted: m[4] === "muted" }] : [];
+  });
+}
+
+/** Outputs that usually have no speakers: a monitor's or TV's sound through the graphics card, or a digital (optical) out. */
+export function likelySilent(name: string): boolean {
+  return /\b(NVIDIA|AMD) High Definition Audio\b|Intel.*Display Audio|\bHDMI\b|DisplayPort|Digital Output|S\/PDIF|SPDIF/i.test(name);
+}
+
+/** Where the sound should go instead: headphones first (the person is probably wearing them), then speakers. */
+export function bestOutput(outputs: SoundOutput[]): SoundOutput | null {
+  const usable = outputs.filter((o) => !likelySilent(o.name));
+  const rank = (o: SoundOutput) => (/headphone|headset|airpods|buds|earphone/i.test(o.name) ? 0 : /speaker/i.test(o.name) ? 1 : 2);
+  return [...usable].sort((a, b) => rank(a) - rank(b))[0] ?? null;
+}
+
+/** What's wrong with the sound, in plain words, and what Halo would switch to. null: nothing wrong it can see. */
+export function soundDiagnosis(outputs: SoundOutput[]): { problem: string; target: SoundOutput; switchTo: boolean } | null {
+  const current = outputs.find((o) => o.isDefault);
+  if (!current) {
+    const target = bestOutput(outputs);
+    return target ? { problem: "No sound output is chosen", target, switchTo: true } : null;
+  }
+  if (likelySilent(current.name)) {
+    const target = bestOutput(outputs);
+    if (target) return { problem: `The sound is going to ${current.name}, which usually has no speakers`, target, switchTo: true };
+  }
+  if (current.muted) return { problem: `${current.name} is muted`, target: current, switchTo: false };
+  if (current.level >= 0 && current.level < 10) return { problem: `${current.name} is turned almost all the way down (${current.level}%)`, target: current, switchTo: false };
+  return null;
+}
+
 // ---------- Mouse pointer size ----------
 // Settings > Accessibility > Mouse pointer > Size (1-15) stores CursorSize, and the cursor size in pixels in
 // CursorBaseSize. SPI_SETCURSORS (0x57) makes Windows reload the pointers at the new size right away.

@@ -198,7 +198,7 @@
     }
   }
 
-  const CONFETTI = ["#e83357", "#f6c445", "#5fc7a8", "#6ea8ff", "#ff7aa8", "#ffffff"];
+  const CONFETTI = ["#f5b83d", "#f6c445", "#5fc7a8", "#6ea8ff", "#ff7aa8", "#ffffff"];
   function celebrateBurst() {
     if (!st.visible) return;
     const cx = st.x;
@@ -420,7 +420,8 @@
     if (d < 4) return true;
     if (Math.abs(dx) > 6) face(dx > 0 ? 1 : -1, true);
     if (["point", "stop", "sad", "think", "type"].includes(st.pose)) setPose("idle"); // drop props before jumping
-    if (st.reduced) { await fadeMove(p.x, p.y); return true; }
+    // A sprite that should not hop (the Halo ring) fades out and back in at the new spot instead.
+    if (st.reduced || S.teleport) { await fadeMove(p.x, p.y); return true; }
     const n = d > 1300 ? 3 : d > 650 ? 2 : 1;
     const speed = queue.length ? 0.72 : 1; // hurry if more is waiting
     const sx = st.x;

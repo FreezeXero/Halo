@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Halo</title>
+  <meta name="description" content="Halo uses your computer for you. Press one key, say what you need, and it sees your screen and handles it.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>
+    /* One system: two inks, one accent that belongs only to the halo, hairlines, small radii. */
+    :root {
+      --bg: #0a0a0b;
+      --raise: #111113;
+      --ink: #ededec;
+      --ink-2: #a1a1a0;
+      --ink-3: #6b6b6a;
+      --hair: rgba(255, 255, 255, 0.08);
+      --hair-2: rgba(255, 255, 255, 0.14);
+      --gold: #ffc94d;
+      --sky: #7fe6ff;
+      --r: 6px;
+      --serif: "Instrument Serif", Georgia, serif;
+      --sans: Geist, -apple-system, "Segoe UI", sans-serif;
+      --mono: "Geist Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+    .mono { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+
+    /* Nav */
+    nav { position: sticky; top: 0; z-index: 10; background: rgba(10, 10, 11, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--hair); }
+    nav .wrap { height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+    .mark { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--gold); box-shadow: 0 0 10px rgba(255, 201, 77, 0.55), inset 0 0 6px rgba(255, 201, 77, 0.35); }
+    .navlinks { display: flex; align-items: center; gap: 30px; font-size: 14px; color: var(--ink-2); }
+    .navlinks a:hover { color: var(--ink); }
+    .btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: var(--r); font-size: 14px; font-weight: 500; transition: background 0.15s, border-color 0.15s; }
+    .btn-light { background: var(--ink); color: #0a0a0b; }
+    .btn-light:hover { background: #fff; }
+    .btn-line { border: 1px solid var(--hair-2); color: var(--ink); }
+    .btn-line:hover { border-color: rgba(255, 255, 255, 0.3); }
+    .btn .arrow { transition: transform 0.15s; }
+    .btn:hover .arrow { transform: translateX(2px); }
+
+    /* Hero: left-aligned, the product is the picture */
+    .hero { padding: 120px 0 0; }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: end; }
+    h1 { margin: 22px 0 0; font: 400 clamp(52px, 7.4vw, 104px)/0.95 var(--serif); letter-spacing: -0.02em; }
+    h1 em { color: var(--ink-2); }
+    .hero-copy p { margin: 0 0 28px; max-width: 430px; color: var(--ink-2); font-size: 17px; }
+    .hero-copy .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .status { margin-top: 26px; display: flex; gap: 22px; flex-wrap: wrap; }
+    .status span::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: var(--gold); vertical-align: 1px; }
+
+    /* The screen */
+    .screen { position: relative; margin-top: 80px; border: 1px solid var(--hair); border-radius: 10px; background: #0d0d0f; overflow: hidden; aspect-ratio: 16 / 9; }
+    .screen .chrome { height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--hair); }
+    .screen .chrome i { width: 10px; height: 10px; border-radius: 50%; background: #2a2a2d; }
+    .screen .chrome .url { margin-left: 14px; height: 22px; flex: 0 1 360px; border-radius: 4px; background: #161618; display: flex; align-items: center; padding: 0 10px; font: 12px var(--mono); color: var(--ink-3); }
+    .call { position: absolute; inset: 52px 18px 18px; display: grid; grid-template-columns: 1.6fr 1fr; gap: 10px; }
+    .tile { position: relative; border-radius: 6px; background: linear-gradient(160deg, #1c1c20, #141416); display: grid; place-items: center; overflow: hidden; }
+    .tile .avatar { width: 64px; height: 64px; border-radius: 50%; background: #2a2a30; display: grid; place-items: center; font: 400 28px var(--serif); color: var(--ink-2); }
+    .tile .name { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--ink-2); }
+    .tile .flag { position: absolute; right: 10px; top: 10px; font: 11px var(--mono); color: #ff8a7a; letter-spacing: 0.04em; transition: opacity 0.4s; }
+    .tile .wave { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; gap: 3px; height: 16px; align-items: end; opacity: 0; transition: opacity 0.4s; }
+    .tile .wave b { width: 3px; background: var(--ink-2); border-radius: 2px; animation: lvl 0.9s ease-in-out infinite; }
+    .tile .wave b:nth-child(2) { animation-delay: -0.3s; } .tile .wave b:nth-child(3) { animation-delay: -0.6s; } .tile .wave b:nth-child(4) { animation-delay: -0.15s; }
+    @keyframes lvl { 0%, 100% { height: 4px; } 50% { height: 16px; } }
+    .side { display: grid; grid-template-rows: 1fr auto; gap: 10px; }
+    .output { border: 1px solid var(--hair); border-radius: 6px; padding: 14px; font-size: 13px; opacity: 0.35; transition: opacity 0.4s, border-color 0.4s; }
+    .output.lit { opacity: 1; border-color: var(--hair-2); }
+    .output .mono { display: block; margin-bottom: 10px; }
+    .opt { display: flex; align-items: center; gap: 10px; padding: 8px 6px; color: var(--ink-2); border-radius: 4px; transition: background 0.3s, color 0.3s; }
+    .opt::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--ink-3); flex: none; transition: all 0.3s; }
+    .opt.sel { color: var(--ink); }
+    .opt.sel::before { border-color: var(--gold); background: radial-gradient(var(--gold) 45%, transparent 50%); }
+
+    /* The real Halo bar and ring, as in the app */
+    .bar { position: absolute; left: calc(18px + (100% - 46px) * 0.615 / 2); bottom: 34px; transform: translateX(-50%); width: min(420px, 54%); padding: 16px 18px 14px; border-radius: 18px; background: rgba(16, 18, 26, 0.96); border: 1px solid rgba(255, 201, 77, 0.22); box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7), 0 0 40px -10px rgba(255, 201, 77, 0.18); }
+    .bar .eyebrow { font-size: 12px; color: #b4bac8; margin-bottom: 3px; }
+    .bar .line { font-size: 15px; line-height: 1.45; min-height: 44px; transition: opacity 0.25s; }
+    .bar .you { color: #b4bac8; font-style: italic; }
+    .orb { position: absolute; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; transition: left 0.9s cubic-bezier(.3,.8,.25,1), top 0.9s cubic-bezier(.3,.8,.25,1); }
+    .orb::before { content: ""; position: absolute; inset: 0; border-radius: 50%; padding: 3.5px; background: conic-gradient(from var(--a, 0deg), #ffd772, #fff, #7fe6ff, #ffd772); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 4s linear infinite; }
+    .orb::after { content: ""; position: absolute; inset: -16px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 201, 77, 0.28), transparent); animation: breathe 3s ease-in-out infinite; }
+    .orb.busy::before { animation-duration: 0.9s; }
+    @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+    @keyframes spin { to { --a: 360deg; } }
+    @keyframes breathe { 50% { transform: scale(1.12); opacity: 0.7; } }
+    .target { position: absolute; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 2px solid var(--gold); box-shadow: 0 0 18px rgba(255, 201, 77, 0.5); opacity: 0; transform: scale(0.6); transition: opacity 0.3s, transform 0.4s cubic-bezier(.2,.8,.3,1.4); }
+    .target.on { opacity: 1; transform: scale(1); }
+
+    /* Sections */
+    section { padding: 140px 0; }
+    .sec-head { display: grid; grid-template-columns: 1fr 2fr; gap: 56px; border-top: 1px solid var(--hair); padding-top: 28px; }
+    h2 { margin: 0; font: 400 clamp(36px, 4.6vw, 60px)/1.02 var(--serif); letter-spacing: -0.015em; }
+    h2 em { color: var(--ink-2); }
+    .sec-head p { margin: 22px 0 0; color: var(--ink-2); max-width: 560px; font-size: 17px; }
+
+    .steps { margin-top: 72px; display: grid; grid-template-columns: 1fr 2fr; gap: 56px; }
+    .steps ol { list-style: none; margin: 0; padding: 0; counter-reset: s; grid-column: 2; }
+    .steps li { counter-increment: s; display: grid; grid-template-columns: 64px 1fr 1fr; gap: 24px; padding: 28px 0; border-top: 1px solid var(--hair); align-items: baseline; }
+    .steps li:last-child { border-bottom: 1px solid var(--hair); }
+    .steps li::before { content: "0" counter(s); font: 13px var(--mono); color: var(--ink-3); }
+    .steps h3 { margin: 0; font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+    .steps p { margin: 0; color: var(--ink-2); font-size: 15px; }
+    kbd { font: 12px var(--mono); padding: 2px 6px; border: 1px solid var(--hair-2); border-radius: 4px; color: var(--ink); }
+
+    .quote { margin-top: 72px; display: grid; grid-template-columns: 1fr 2fr; gap: 56px; }
+    .quote blockquote { grid-column: 2; margin: 0; font: 400 clamp(26px, 3vw, 38px)/1.2 var(--serif); color: var(--ink); }
+    .quote blockquote span { color: var(--ink-3); }
+
+    .table { margin-top: 72px; display: grid; grid-template-columns: 1fr 2fr; gap: 56px; }
+    .table .rows { grid-column: 2; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 18px 0; border-top: 1px solid var(--hair); font-size: 15px; }
+    .row:last-child { border-bottom: 1px solid var(--hair); }
+    .row.head { padding-top: 0; border-top: 0; }
+    .row div:first-child { color: var(--ink-3); }
+    .row div:last-child { color: var(--ink); }
+
+    .rules { margin-top: 72px; display: grid; grid-template-columns: 1fr 2fr; gap: 56px; }
+    .rules dl { grid-column: 2; margin: 0; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--hair); }
+    .rules dl > div { padding: 26px 24px 26px 0; border-bottom: 1px solid var(--hair); }
+    .rules dl > div:nth-child(odd) { border-right: 1px solid var(--hair); }
+    .rules dl > div:nth-child(even) { padding-left: 24px; }
+    .rules dt { font-size: 17px; font-weight: 500; margin-bottom: 6px; }
+    .rules dd { margin: 0; color: var(--ink-2); font-size: 15px; }
+
+    .closing { padding: 160px 0 120px; border-top: 1px solid var(--hair); }
+    .closing h2 { font-size: clamp(48px, 7vw, 96px); line-height: 0.98; max-width: 900px; }
+    .closing .actions { margin-top: 40px; display: flex; gap: 10px; flex-wrap: wrap; }
+    footer { border-top: 1px solid var(--hair); padding: 28px 0; }
+    footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+    .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(.2,.8,.2,1); }
+    .reveal.in { opacity: 1; transform: none; }
+
+    @media (max-width: 880px) {
+      .navlinks a:not(.btn) { display: none; }
+      .hero { padding-top: 72px; }
+      .hero-grid, .sec-head, .steps, .quote, .table, .rules { grid-template-columns: 1fr; gap: 24px; }
+      .steps ol, .quote blockquote, .table .rows, .rules dl { grid-column: 1; }
+      .steps li { grid-template-columns: 40px 1fr; }
+      .steps li p { grid-column: 2; }
+      .rules dl { grid-template-columns: 1fr; }
+      .rules dl > div, .rules dl > div:nth-child(even) { padding: 22px 0; border-right: 0; }
+      .screen { aspect-ratio: 3 / 4; margin-top: 56px; }
+      .call { grid-template-columns: 1fr; grid-template-rows: 1.2fr 1fr; }
+      section { padding: 96px 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wrap">
+      <a class="brand" href="#"><span class="mark"></span>Halo</a>
+      <div class="navlinks">
+        <a href="#how">How it works</a>
+        <a href="#who">Who it's for</a>
+        <a href="#safety">Safety</a>
+        <a class="btn btn-light" href="#access">Request access</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <div class="mono">Halo · Private beta</div>
+          <h1>Just say it.<br><em>Halo does it.</em></h1>
+        </div>
+        <div class="hero-copy">
+          <p>An AI that uses your computer for you. Press one key, describe what you need in your own words, and Halo sees your screen and takes care of it.</p>
+          <div class="actions">
+            <a class="btn btn-light" href="#access">Request access <span class="arrow">→</span></a>
+            <a class="btn btn-line" href="#how">How it works</a>
+          </div>
+          <div class="status mono"><span>macOS</span><span>Windows 11</span></div>
+        </div>
+      </div>
+
+      <div class="screen reveal" aria-label="Animated example: Halo fixes the sound on a video call">
+        <div class="chrome"><i></i><i></i><i></i><div class="url">meet · family call</div></div>
+        <div class="call">
+          <div class="tile">
+            <div class="avatar">S</div>
+            <div class="name">Sam</div>
+            <div class="flag" id="flag">NO AUDIO</div>
+            <div class="wave" id="wave"><b></b><b></b><b></b><b></b></div>
+          </div>
+          <div class="side">
+            <div class="tile"><div class="avatar">M</div><div class="name">You</div></div>
+            <div class="output" id="output">
+              <span class="mono">Sound output</span>
+              <div class="opt sel" id="o1">Monitor, no speakers</div>
+              <div class="opt" id="o2">Laptop speakers</div>
+            </div>
+          </div>
+        </div>
+        <div class="target" id="target"></div>
+        <div class="orb" id="orb"></div>
+        <div class="bar">
+          <div class="eyebrow" id="eyebrow">Halo is listening</div>
+          <div class="line" id="line"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="mono">01 · How it works</div>
+        <div>
+          <h2>No menus. No settings. <em>No jargon.</em></h2>
+          <p>Halo starts from the way people actually ask for help, not from a perfectly worded command.</p>
+        </div>
+      </div>
+      <div class="steps">
+        <ol>
+          <li class="reveal"><h3>Press one key</h3><p><kbd>Ctrl</kbd> <kbd>Alt</kbd> <kbd>D</kbd> from anywhere. Halo appears where you are and listens.</p></li>
+          <li class="reveal"><h3>Say what's wrong</h3><p>"The sound thing is broken." "Make the words bigger." It reads your screen to work out what you mean.</p></li>
+          <li class="reveal"><h3>It takes care of it</h3><p>It tells you what it will change, does it, and checks that it worked. Or it points at the button, if you'd rather learn.</p></li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="who">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="mono">02 · Who it's for</div>
+        <div>
+          <h2>AI agents are built for experts. <em>Halo is built for everyone else.</em></h2>
+          <p>Today's agents make people who already know computers faster. Halo is for the people who'd otherwise call a family member.</p>
+        </div>
+      </div>
+      <div class="table">
+        <div class="rows reveal">
+          <div class="row head mono"><div>Typical AI agent</div><div>Halo</div></div>
+          <div class="row"><div>You type a clear, well-worded request</div><div>You talk, the way you'd talk to a person</div></div>
+          <div class="row"><div>You already know what the problem is</div><div>It works out the problem from your screen</div></div>
+          <div class="row"><div>You're expected to catch its mistakes</div><div>It assumes you can't, and is careful for you</div></div>
+          <div class="row"><div>Lives in a chat window or a browser</div><div>Works on your real computer, across your apps</div></div>
+        </div>
+      </div>
+      <div class="quote">
+        <blockquote class="reveal">"Can you come over and fix the computer?" <span>Halo is for every family that has heard that sentence.</span></blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section id="safety">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <div class="mono">03 · Safety</div>
+        <div>
+          <h2>Careful by design. <em>Enforced in code.</em></h2>
+          <p>Letting software use your computer takes trust. These rules live in Halo's code, so the AI can't talk its way around them.</p>
+        </div>
+      </div>
+      <div class="rules">
+        <dl class="reveal">
+          <div><dt>Asks before it changes anything</dt><dd>Every change is read back to you first, in plain words.</dd></div>
+          <div><dt>Never touches passwords or payments</dt><dd>Passwords, payments, sign-ins and permissions stay with you.</dd></div>
+          <div><dt>Never deletes anything for good</dt><dd>Nothing Halo does is permanent.</dd></div>
+          <div><dt>Watches for common scams</dt><dd>Spots well-known patterns, like fake "virus" warnings, and tells you before you act.</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing" id="access">
+    <div class="wrap">
+      <div class="mono reveal">Private beta · Mac and Windows</div>
+      <h2 class="reveal">Help, the moment<br>you <em>ask for it.</em></h2>
+      <div class="actions reveal">
+        <a class="btn btn-light" href="#" id="waitlist">Request access <span class="arrow">→</span></a>
+        <a class="btn btn-line" href="https://github.com/FreezeXero/Halo">GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap mono"><div>© 2026 Halo</div><div>Download coming soon</div></div>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const orb = $("orb"), target = $("target"), line = $("line"), eyebrow = $("eyebrow");
+    const at = (el, x, y) => { el.style.left = x + "%"; el.style.top = y + "%"; };
+    // Puts el on the left edge (or centre) of another element in the screen, measured, so it lines up at any size.
+    const onto = (el, of, edge = "left") => {
+      const s = document.querySelector(".screen").getBoundingClientRect(), r = of.getBoundingClientRect();
+      const x = (edge === "left" ? r.left + 14 : r.left + r.width / 2) - s.left, y = r.top + r.height / 2 - s.top;
+      at(el, (x / s.width) * 100, (y / s.height) * 100);
+    };
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const show = (who, html) => { line.style.opacity = 0; setTimeout(() => { eyebrow.textContent = who; line.innerHTML = html; line.style.opacity = 1; }, 220); };
+
+    async function loop() {
+      while (true) {
+        at(orb, 50, 62); orb.classList.remove("busy"); target.classList.remove("on");
+        $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
+        $("flag").style.opacity = 1; $("wave").style.opacity = 0;
+        show("You", '<span class="you">"The sound thing is broken. I can\'t hear Sam."</span>');
+        await wait(2800);
+        orb.classList.add("busy"); at(orb, 30, 40);
+        show("Halo is looking", "Your call is fine. The sound is going to your monitor, which has no speakers.");
+        await wait(1600);
+        onto(orb, $("output"), "center"); $("output").classList.add("lit");
+        await wait(2000);
+        orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
+        show("Halo", "I'll switch it to your laptop speakers. Okay?");
+        await wait(2400);
+        show("You", '<span class="you">"Yes."</span>');
+        await wait(1000);
+        target.classList.remove("on"); $("o1").classList.remove("sel"); $("o2").classList.add("sel");
+        $("flag").style.opacity = 0; $("wave").style.opacity = 1;
+        show("Done", "Switched to your laptop speakers. You should hear Sam now.");
+        at(orb, 50, 62);
+        await wait(3600);
+      }
+    }
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); show("Halo", "Switched to your laptop speakers. You should hear Sam now."); }
+    else loop();
+
+    const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.12 });
+    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+
+    // No sign-up form yet: point this at a real form link once there is one.
+    $("waitlist").addEventListener("click", (e) => { e.preventDefault(); alert("Access requests open soon. Thanks for your interest in Halo."); });
+  </script>
+</body>
+</html>

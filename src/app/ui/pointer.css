@@ -1,9 +1,9 @@
 /* Fixed colours, not light/dark: the pointer sits on top of any app, so it needs contrast on both light and dark screens. */
 :root {
-  --ring: #e0452a;
+  --ring: #ffc94d;
   --ring-edge: #ffffff;
-  --ring-glow: rgba(224, 69, 42, 0.3);
-  --label-bg: #1f1d1a;
+  --ring-glow: rgba(255, 201, 77, 0.35);
+  --label-bg: #10121a;
   --label-fg: #ffffff;
 }
 

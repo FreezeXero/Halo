@@ -31,6 +31,9 @@ import { runAgent } from "../agent/agent.js";
 import { realMac } from "../agent/mac.js";
 import { realWindows } from "../win/deps.js";
 import { isWindows } from "../platform.js";
+import { browserProcess, quickAction, type QuickAction } from "../core/quick.js";
+import { psQuote, runPowerShell } from "../win/ps.js";
+import { sendKeysText } from "../win/ui.js";
 import { autopilot, fileRecord, waitForSettle } from "../agent/autopilot.js";
 import { offlineGuide } from "../agent/offline.js";
 import { TOOLS as AGENT_TOOLS, type AgentUI, type ToolContext } from "../agent/tools.js";
@@ -71,6 +74,8 @@ const UI_URL = pathToFileURL(join(here, "ui")).href + "/";
 const PRELOAD = join(here, "preload.cjs");
 const OWN_APP_NAMES = new Set(["Electron", "Halo"]);
 const SUGGESTIONS = ["My printer won't print", "I can't hear anything", "The internet isn't working", "Install Zoom"];
+/** The first button when Halo asks what they need: it reads the screen and helps with what's on it (an error, a message). */
+const LOOK_AT_SCREEN = "Look at my screen";
 
 let tray: Tray | null = null;
 let warning: BrowserWindow | null = null;
@@ -424,7 +429,8 @@ async function lookAndHelp(): Promise<void> {
     if (appName) lastExternalApp = appName;
 
     showBar({ phase: "looking", message: "Let me take a look…" });
-    say("Let me take a look.", "now");
+    // Windows asks right away (below), so there's nothing to fill the silence.
+    if (!isWindows()) say("Let me take a look.", "now");
 
     if (!hasApiKey()) {
       showError("I need a Claude API key first. Put ANTHROPIC_API_KEY in the .env file, then restart me.");
@@ -438,10 +444,11 @@ async function lookAndHelp(): Promise<void> {
     if (!live()) return;
     lastLook = { shot, screenText: source.text.slice(0, 6000) };
 
-    // Windows: the agent does everything (its tools are PowerShell; the step-by-step route below runs Mac shell commands).
+    // Windows: ask what they need straight away instead of waiting on the AI just to ask it. Their answer goes to the
+    // agent together with this screenshot (or, for "reload the page" and the like, is done right away: quickFlow).
     if (isWindows()) {
       busy = false;
-      await agentFlow("", lastLook);
+      askWhat("What can I do for you?", [LOOK_AT_SCREEN, ...SUGGESTIONS.slice(0, 3)]);
       return;
     }
     // A page that matches our basic scam patterns always goes through the careful route, where Droid judges it.
@@ -485,6 +492,23 @@ async function onAnswer(text: string): Promise<void> {
     showBar({ phase: "hidden" });
     return;
   }
+  // "Look at my screen": the agent reads what was on screen when they pressed the key, and helps or asks.
+  if (isWindows() && !resumeAgent && /^(please )?(look at|scan|check|read) (my |the )?screen\b/i.test(clean)) {
+    await startFlow(async () => {
+      try {
+        await agentFlow("", lastLook);
+      } catch (error) {
+        showError(friendlyError(error));
+      }
+    });
+    return;
+  }
+  // Simple browser requests ("reload the page", "go to YouTube") need no AI: do them now.
+  const quick = isWindows() && !resumeAgent ? quickAction(clean, lastExternalApp) : null;
+  if (quick) {
+    await quickFlow(quick);
+    return;
+  }
   // Typed on the "Stopped" screen: carry on with the stopped task, with what they added.
   const resume = resumeAgent ? { ...resumeAgent, note: clean } : undefined;
   await startFlow(async () => {
@@ -494,6 +518,28 @@ async function onAnswer(text: string): Promise<void> {
       showError(friendlyError(error));
     }
   });
+}
+
+/** Does a simple browser request with a keyboard shortcut in the browser they were using, or opens the address. */
+async function quickFlow(q: QuickAction): Promise<void> {
+  const browser = browserProcess(lastExternalApp);
+  // Hiding the bar hands the keyboard back to the window they were using.
+  showBar({ phase: "hidden" });
+  if (q.kind === "go" && !browser) {
+    await shell.openExternal(q.url);
+    return;
+  }
+  const keys = q.kind === "keys" ? [q.keys] : ["^l", sendKeysText(q.url) + "{ENTER}"];
+  const script = [
+    browser ? `$p = Get-Process -Name ${psQuote(browser)} -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1; if ($p) { [void](New-Object -ComObject WScript.Shell).AppActivate($p.Id) }` : "",
+    "Add-Type -AssemblyName System.Windows.Forms",
+    "Start-Sleep -Milliseconds 150",
+    keys.map((k) => `[System.Windows.Forms.SendKeys]::SendWait(${psQuote(k)})`).join("; Start-Sleep -Milliseconds 120; "),
+  ].filter(Boolean).join("; ");
+  const t0 = Date.now();
+  const r = await runPowerShell(script, 8000);
+  if (process.env.CALHACK_DEBUG) console.log(`[quick] ${q.did} ${Date.now() - t0} ms, exit ${r.code}`);
+  if (r.code !== 0) showError("I couldn't do that in your browser. Click on its window and try again.");
 }
 
 async function route(t: Triage): Promise<void> {

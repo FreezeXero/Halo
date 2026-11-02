@@ -7,6 +7,7 @@ import { psQuote } from "./ps.js";
 import { assessPowerShell } from "./risk.js";
 import {
   DARK_MODE_READ, darkModeSet, DISK_READ, INTERNET_CHECK, parseDarkMode, parseInternet, parsePointerSize, parseRadio, parseTextScale, parseVolume,
+  OUTPUTS_READ, outputSwitch, parseOutputs, soundDiagnosis, type SoundOutput,
   POINTER_SIZE_READ, POINTER_SIZES, pointerSizeSet, printerFixCommand, printerProblems, PRINTERS_READ, radioCommand, safePrinterName,
   SETTINGS_PAGE, SETTINGS_PAGES, TEXT_SCALE_READ, VOLUME_READ, volumeSet, type RadioKind, type WinPrinter,
 } from "./system.js";
@@ -443,6 +444,43 @@ const addCalendarEvent: AgentTool = {
   },
 };
 
+/** "Headphones (Freeze's AirPods Pro #3)" → "your headphones (Freeze's AirPods Pro #3)": the kind first, as people say it. */
+function outputLabel(o: SoundOutput): string {
+  const m = /^(.+?)\s*\((.+)\)$/.exec(o.name);
+  return m ? `${m[1].toLowerCase()} (${m[2]})` : o.name;
+}
+
+const fixSound: AgentTool = {
+  name: "fix_sound",
+  kind: "act",
+  description: "Use FIRST for any sound complaint (\"I can't hear anything\", a call or video is silent, \"the sound thing is broken\"). In one step it finds why: the sound going to a monitor or TV with no speakers, or the output muted or turned almost all the way down. It tells the person what it will change, switches to their headphones or speakers, unmutes, and checks it took.",
+  input_schema: obj({}),
+  label: () => "Checking where your sound is going…",
+  async run(_input, ctx) {
+    const read = await ctx.mac.run(OUTPUTS_READ);
+    const before = parseOutputs(read.output);
+    const ref0 = addEvidence(ctx, { kind: "before", command: "list the sound outputs", code: read.code, output: before.map((o) => `${o.isDefault ? "* " : ""}${o.name} ${o.level}%${o.muted ? " muted" : ""}`).join("; ") || tail(read.output, 2) });
+    if (!before.length) return `[${ref0}] I couldn't read the sound outputs: ${tail(read.output, 2)}. Try sound_status and set_volume.`;
+    const d = soundDiagnosis(before);
+    const current = before.find((o) => o.isDefault);
+    if (!d) return `[${ref0}] Nothing looks wrong: sound plays on ${current?.name ?? "the default output"} at ${current?.level ?? "?"}%, not muted. The app itself may be muted, or its own sound setting may point somewhere else.`;
+    const ok = await ctx.ui.confirm({
+      title: d.switchTo ? `Switch your sound to ${outputLabel(d.target)}?` : "Turn your sound back on?",
+      message: `${d.problem}.${d.switchTo ? ` I'll play it on ${outputLabel(d.target)} instead.` : ""}`,
+      yes: d.switchTo ? "Yes, switch it" : "Yes, turn it on",
+      no: "No, leave it",
+    });
+    if (!ok) return `[${ref0}] They said no, so nothing changed. Problem found: ${d.problem}.`;
+    const r = await ctx.mac.run(outputSwitch(d.target.id));
+    const after = parseOutputs(r.output);
+    const now = after.find((o) => o.isDefault);
+    const worked = r.code === 0 && now?.id === d.target.id && !now.muted && now.level >= 10;
+    const ref = addEvidence(ctx, { kind: "after", outcome: worked ? "passed" : "failed", command: `play sound on ${d.target.name}, unmuted`, code: worked ? 0 : 1, output: now ? `${now.name} ${now.level}%${now.muted ? " muted" : ""}` : tail(r.output, 2) });
+    ctx.beforeAfter.push({ label: "Sound plays on", before: current ? `${current.name}${current.muted ? ", muted" : ""}` : "Nothing", after: now ? `${now.name}, ${now.level}%` : "Unknown" });
+    return worked ? `[${ref}] Fixed: sound now plays on ${now.name} at ${now.level}%, not muted (checked).` : `[${ref}] I tried, but it didn't take: ${tail(r.output, 2)}`;
+  },
+};
+
 // ---------- the Windows tool list ----------
 
 const OVERRIDES: AgentTool[] = [
@@ -457,5 +495,6 @@ const MAC_ONLY = new Set(["move_app_to_trash", "start_call"]);
 /** The Mac's list, in its order, with Windows versions swapped in and Mac-only tools left out. */
 export function windowsTools(base: AgentTool[] = TOOLS): AgentTool[] {
   const byName = new Map(OVERRIDES.map((t) => [t.name, t]));
-  return base.filter((t) => !MAC_ONLY.has(t.name)).map((t) => byName.get(t.name) ?? t);
+  // fix_sound is Windows-only; it goes in front of the other sound tools.
+  return [fixSound, ...base.filter((t) => !MAC_ONLY.has(t.name)).map((t) => byName.get(t.name) ?? t)];
 }

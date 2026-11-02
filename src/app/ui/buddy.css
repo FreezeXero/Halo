@@ -22,7 +22,7 @@ html.buddy-page body {
   overflow: hidden;
   z-index: 2147483000;
   font: 600 17px/1.25 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
-  --buddy: #e83357;
+  --buddy: #f5b83d;
 }
 
 /* ---------- The buddy ---------- */
@@ -49,8 +49,8 @@ html.buddy-page body {
   overflow: visible;
   shape-rendering: crispEdges;
   image-rendering: pixelated;
-  /* Thin dark edge + soft glow: readable on light and dark backgrounds. */
-  filter: drop-shadow(0 0 0.8px rgba(40, 16, 8, 0.85)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.28));
+  /* A faint dark halo keeps the light ring readable on white pages too. */
+  filter: drop-shadow(0 0 6px rgba(10, 12, 20, 0.35));
 }
 
 .buddy-shadow {
@@ -141,7 +141,7 @@ html.buddy-page body {
   border-radius: 50%;
   border: 3px solid var(--buddy);
   box-sizing: border-box;
-  box-shadow: 0 0 0 4px rgba(232, 51, 87, 0.22), 0 0 16px rgba(232, 51, 87, 0.45);
+  box-shadow: 0 0 0 4px rgba(245, 184, 61, 0.22), 0 0 16px rgba(245, 184, 61, 0.45);
   opacity: 0;
   transform: scale(0.4);
   transition: opacity 0.2s ease, transform 0.35s cubic-bezier(.2, .8, .3, 1.3);
@@ -163,9 +163,9 @@ html.buddy-page body {
 .buddy-scanbox {
   position: absolute;
   box-sizing: border-box;
-  border: 2px dashed rgba(232, 51, 87, 0.75);
+  border: 2px dashed rgba(245, 184, 61, 0.75);
   border-radius: 10px;
-  background: rgba(232, 51, 87, 0.05);
+  background: rgba(245, 184, 61, 0.05);
   overflow: hidden;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -178,7 +178,7 @@ html.buddy-page body {
   right: 0;
   top: 0;
   height: 36px;
-  background: linear-gradient(to bottom, rgba(232, 51, 87, 0), rgba(232, 51, 87, 0.22) 80%, rgba(232, 51, 87, 0.55));
+  background: linear-gradient(to bottom, rgba(245, 184, 61, 0), rgba(245, 184, 61, 0.22) 80%, rgba(245, 184, 61, 0.55));
   transform: translateY(-40px);
 }
 .buddy-scanbox.on::after { animation: buddy-sweep 1.8s ease-in-out infinite; }
@@ -190,7 +190,7 @@ html.buddy-page body {
   width: 7px;
   height: 7px;
   border-radius: 2px;
-  background: #efe4da;
+  background: rgba(255, 214, 120, 0.7);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.16);
 }
 .buddy-confetti { width: 6px; height: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18); }

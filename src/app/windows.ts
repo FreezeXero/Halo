@@ -264,10 +264,11 @@ export function hidePointer(): void {
 }
 
 // ---------- Buddy layer ----------
-// Halo, the red buddy (ui/buddy*.js). A see-through layer over the main display, like the pointer layer: it never takes clicks
+// Halo's buddy (ui/buddy*.js). A see-through layer over the main display, like the pointer layer: it never takes clicks
 // or focus, and it's kept out of screenshots. It sits on the bar's card and takes a pose for each moment (poseForBar);
 // pointAt sends it over to point at the thing to click, and hidePointer brings it back.
 
+// On unless CALHACK_BUDDY=0, which shows the plain pointer ring instead.
 const BUDDY_ON = process.env.CALHACK_BUDDY !== "0";
 
 const buddy = {

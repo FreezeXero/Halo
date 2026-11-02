@@ -45,7 +45,7 @@ const SYSTEM = `You are Halo, a helper inside a Mac for people who aren't techni
 How to work:
 1. Understand what they want. If they asked something specific, that's the goal. If they said nothing, use what's on their screen.
 2. Look first with the read-only tools (apps, sound, printer, internet, disk, files). Don't guess.
-3. Act with your tools. Do it yourself; don't hand them steps to follow. Never tell the person to open an app, System Settings, a folder or a web page: use open_app, open_settings, show_file or open_website. Ordinary settings such as Wi-Fi, Bluetooth and volume are yours to switch: use set_wifi, set_bluetooth and set_volume as soon as asked, without asking permission first. So are Accessibility features (text size, pointer size, zoom, contrast, reduce motion, captions): change_setting first when it covers the setting; otherwise open_settings with x-apple.systempreferences:com.apple.Accessibility-Settings.extension, then guide_person, which does the clicks itself. Letting an app control the Mac (Privacy & Security > Accessibility) is a permission and stays with the person. Fastest route first: (a) a built-in tool (change_setting, set_volume, set_sound_output, fix_problem, open_app…) takes under a second; (b) run_command only for a change you know a safe command for that no tool covers; (c) the screen only when no command can do it: open_settings at the exact page, then guide_person. The person's own turn is the last resort. Only when a step is still incomplete and only a click on screen can finish it, call guide_person: Halo then watches the screen and does the clicks itself, and hands only private parts (permissions, passwords, sign-in, payments, personal choices such as which picture or name to pick, deleting) to the person. Never ask for or guess those yourself. Details that are already written in the message on screen (the name it addresses them by, an appointment number, a date) are not secrets: pass them as fill_details so Halo can fill in a form with them.
+3. Act with your tools. Do it yourself; don't hand them steps to follow. Never tell the person to open an app, System Settings, a folder or a web page: use open_app, open_settings, show_file or open_website. Ordinary settings such as Wi-Fi, Bluetooth and volume are yours to switch: use set_wifi, set_bluetooth and set_volume as soon as asked, without asking permission first. So are Accessibility features (text size, pointer size, zoom, contrast, reduce motion, captions): change_setting first when it covers the setting; otherwise open_settings with x-apple.systempreferences:com.apple.Accessibility-Settings.extension, then guide_person, which does the clicks itself. Letting an app control the Mac (Privacy & Security > Accessibility) is a permission and stays with the person. Any search on Google or YouTube → search_web, which opens the results in one step: never click into a search box and type. Fastest route first: (a) a built-in tool (change_setting, set_volume, set_sound_output, fix_problem, open_app, search_web…) takes under a second; (b) run_command only for a change you know a safe command for that no tool covers; (c) the screen only when no command can do it: open_settings at the exact page, then guide_person. The person's own turn is the last resort. Only when a step is still incomplete and only a click on screen can finish it, call guide_person: Halo then watches the screen and does the clicks itself, and hands only private parts (permissions, passwords, sign-in, payments, personal choices such as which picture or name to pick, deleting) to the person. Never ask for or guess those yourself. Details that are already written in the message on screen (the name it addresses them by, an appointment number, a date) are not secrets: pass them as fill_details so Halo can fill in a form with them.
 4. Keep going until it's done. When one route fails, take the next one (a built-in tool → a safe run_command → open_settings + guide_person, which clicks for you) instead of stopping. Never end with a list of steps for the person to do, and never mark a step "you" just because it takes clicks: clicks are yours. Only passwords, payments, permission prompts, sign-in and personal choices are theirs.
 5. Check again that it worked: the act tools read their result back. When the result is something you can see (dark mode, a page or app now showing), add one check_screen as the final check. Then call finish with the evidence numbers that prove it.
 
@@ -90,6 +90,7 @@ export function windowsSystem(mac: string): string {
   return text + `
 
 On Windows:
+- Any sound complaint ("I can't hear", a silent call or video, "the sound thing is broken"): call fix_sound first, on your very first turn. It finds the cause, asks the person and fixes it in one step; don't check volume or open Settings before it.
 - Commands are PowerShell. run_check and run_command take PowerShell, never bash or Mac commands.
 - Settings pages open with ms-settings: links (display, sound, notifications, bluetooth, network-wifi, printers, colors, personalization-background, easeofaccess-display, easeofaccess-mousepointer, appsfeatures).
 - Apps install with install_app (winget, Windows' own installer). There's no FaceTime and no moving apps to the Recycle Bin: to remove an app, open_settings with ms-settings:appsfeatures, then guide_person.
@@ -175,15 +176,22 @@ export async function runAgent(input: AgentInput, ui: AgentUI, mac: MacDeps, opt
     turns++;
     let response: Anthropic.Beta.BetaMessage;
     const t0 = Date.now();
+    // The first look after a bare key press only reads the screen and asks what they need: low effort is enough there.
+    const firstLook = !input.request && turns === 1;
+    // Low by default: everyday computer tasks don't need long thinking, and waiting is the biggest complaint.
+    // CALHACK_AGENT_EFFORT=medium or high trades speed for more careful planning.
+    const effort = (process.env.CALHACK_AGENT_EFFORT as "low" | "medium" | "high" | undefined) ?? "low";
     try {
       response = await getClient().beta.messages.create({
       model: opts.model ?? process.env.CALHACK_AGENT_MODEL ?? MODEL(),
       max_tokens: 8000,
-      system: isWindows() ? windowsSystem(SYSTEM) : SYSTEM,
+      // Cache the fixed tools + instructions across key presses, and (top-level) the conversation so far across turns.
+      system: [{ type: "text", text: isWindows() ? windowsSystem(SYSTEM) : SYSTEM, cache_control: { type: "ephemeral" } }],
+      cache_control: { type: "ephemeral" },
       tools,
       messages,
       // Medium, not low: on low it plans the steps and then stops short of doing them all.
-      output_config: { effort: (process.env.CALHACK_AGENT_EFFORT as "low" | "medium" | "high") ?? "medium" },
+      output_config: { effort: firstLook ? "low" : effort },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
     } as Anthropic.Beta.MessageCreateParamsNonStreaming, { signal: opts.signal });
@@ -193,7 +201,7 @@ export async function runAgent(input: AgentInput, ui: AgentUI, mac: MacDeps, opt
       throw e;
     }
 
-    if (process.env.CALHACK_DEBUG) console.log(`[agent] turn ${turns}: ${Date.now() - t0} ms, ${response.stop_reason}, ${response.usage.output_tokens} tokens out, tools: ${response.content.filter((b) => b.type === "tool_use").map((b) => (b as Anthropic.Beta.BetaToolUseBlock).name).join(", ") || "none"}`);
+    if (process.env.CALHACK_DEBUG) console.log(`[agent] turn ${turns}: ${Date.now() - t0} ms, ${response.stop_reason}, ${response.usage.output_tokens} tokens out, ${response.usage.cache_read_input_tokens ?? 0} cached in, tools: ${response.content.filter((b) => b.type === "tool_use").map((b) => (b as Anthropic.Beta.BetaToolUseBlock).name).join(", ") || "none"}`);
     if (response.stop_reason === "refusal") throw new Error("Claude declined to help with this request.");
     messages.push({ role: "assistant", content: response.content as Anthropic.Beta.BetaContentBlockParam[] });
 

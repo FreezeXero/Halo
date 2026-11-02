@@ -586,6 +586,31 @@ const openWebsite: AgentTool = {
   },
 };
 
+/** The address of a Google or YouTube search, built here so the AI never picks the site. */
+export function searchUrl(site: string, query: string): string | null {
+  const q = query.trim().slice(0, 200);
+  if (!q) return null;
+  if (site === "youtube") return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+  if (site === "google") return `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+  return null;
+}
+
+const searchWeb: AgentTool = {
+  name: "search_web",
+  kind: "act",
+  description: "Search Google or YouTube and open the results in the browser, in one step. Use it for any search (\"find X on YouTube\", \"look up X\"), instead of clicking into a search box and typing. Then use guide_person to click the result they want.",
+  input_schema: obj({ site: { type: "string", enum: ["google", "youtube"] }, query: str("What to search for, e.g. Organic Chemistry Tutor") }),
+  label: (input) => `Searching ${s(input, "site") === "youtube" ? "YouTube" : "Google"}…`,
+  async run(input, ctx) {
+    const url = searchUrl(s(input, "site"), s(input, "query"));
+    if (!url) return "Refused: give site google or youtube, and something to search for.";
+    const command = openCommand(url);
+    const r = await ctx.mac.run(command);
+    const ref = addEvidence(ctx, { kind: "after", command, code: r.code, output: r.code === 0 ? "opened" : tail(r.output, 2) });
+    return r.code === 0 ? `[${ref}] Opened the ${new URL(url).hostname} results for "${s(input, "query")}".` : `Couldn't open it: ${tail(r.output, 2)}`;
+  },
+};
+
 const trashApp: AgentTool = {
   name: "move_app_to_trash",
   kind: "act",
@@ -1588,7 +1613,7 @@ const finish: AgentTool = {
 
 export const TOOLS: AgentTool[] = [
   listApps, runningApps, soundStatus, checkScreen, checkProblem, diskUsage, findFiles, findFile, runCheck, revealFile,
-  quitApp, openApp, changeSetting, openSettings, openWebsite, trashApp, setVolume, setSoundOutput, setWifi, setBluetooth, fixProblem, installApp, trashFiles, runCommand,
+  quitApp, openApp, changeSetting, openSettings, openWebsite, searchWeb, trashApp, setVolume, setSoundOutput, setWifi, setBluetooth, fixProblem, installApp, trashFiles, runCommand,
   startCall, addCalendarEvent, joinMeeting, reportScam, guidePerson, askPerson, proposePlan, explainIrreversible, finish,
 ];
 
