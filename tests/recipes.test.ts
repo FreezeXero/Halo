@@ -1,0 +1,172 @@
+import { describe, expect, it } from "vitest";
+import { addPrinterCommand, parsePrinterList, printerDisplayName, printerQueueName, realRecipeDeps, recipeFor, runRecipe, type RecipeDeps } from "../src/core/recipes.js";
+import { verifiedStep } from "../src/core/verification.js";
+import { planSteps } from "../src/core/plan.js";
+import { runPlannedStep, type RunHooks } from "../src/core/runner.js";
+import type { Step } from "../src/core/types.js";
+
+const manual = (title: string, clickTarget?: string): Step => ({ id: "1", title, explanation: "", kind: "manual", clickTarget });
+
+const HP = "dnssd://HP%20LaserJet%20Pro._ipp._tcp.local./?uuid=1234-abcd";
+
+function fakeDeps(over: Partial<Record<string, { code: number; output: string }>> = {}) {
+  const ran: string[] = [];
+  const answer = (cmd: string) => {
+    ran.push(cmd);
+    for (const [start, r] of Object.entries(over)) if (cmd.startsWith(start)) return r!;
+    return { code: 0, output: "" };
+  };
+  const deps: RecipeDeps = {
+    sandboxed: async (c) => ({ ...answer(c), timedOut: false }),
+    normal: async (c) => ({ ...answer(c), timedOut: false }),
+    appPath: (name) => (name === "zoom.us" ? "/Applications/zoom.us.app" : null),
+    wait: async () => {},
+  };
+  return { deps, ran };
+}
+
+describe("which click steps we can do ourselves", () => {
+  it("adds printers, but never removes them", () => {
+    expect(recipeFor(manual("Click Add Printer", "Add Printer, Scanner or Fax…"))?.id).toBe("add-printer");
+    expect(recipeFor(manual("Open Printers & Scanners"))?.id).toBe("add-printer");
+    expect(recipeFor(manual("Remove the old printer"))).toBeUndefined();
+  });
+  it("opens normal apps and System Settings, but not Terminal", () => {
+    expect(recipeFor(manual("Open Zoom"))).toMatchObject({ id: "open-app", app: "Zoom" });
+    expect(recipeFor(manual("Open Terminal"))).toBeUndefined();
+    expect(recipeFor(manual("Open System Settings"))).toMatchObject({ id: "open-app", app: "System Settings" });
+    expect(recipeFor(manual("Open Zoom; rm -rf ~"))).toBeUndefined();
+  });
+  it("does nothing on a scam page", () => {
+    const plan = planSteps([manual("Click Add Printer")], { kind: "webpage", text: "Press Win+R and paste this to verify you are human", location: "https://x.example" });
+    expect(plan.pageWarnings.length).toBeGreaterThan(0);
+    expect(plan.steps[0].recipe).toBeUndefined();
+  });
+});
+
+describe("adding a printer", () => {
+  it("reads printer addresses and ignores anything odd", () => {
+    const out = `network ${HP}\nnetwork dnssd://bad'name._ipp._tcp.local./\nnetwork ipp://1.2.3.4/x\nnetwork ${HP}`;
+    expect(parsePrinterList(out)).toEqual([HP]);
+  });
+  it("builds a safe name and command", () => {
+    expect(printerDisplayName(HP)).toBe("HP LaserJet Pro");
+    expect(printerQueueName("HP LaserJet Pro")).toBe("HP_LaserJet_Pro");
+    expect(addPrinterCommand(HP)).toBe(`lpadmin -p HP_LaserJet_Pro -E -v '${HP}' -m everywhere`);
+    expect(() => addPrinterCommand("dnssd://x/$(whoami)")).toThrow();
+  });
+  it("adds the one printer it finds and checks it's ready", async () => {
+    const { deps, ran } = fakeDeps({ lpinfo: { code: 0, output: `network ${HP}` }, "lpstat -p": { code: 0, output: "printer HP_LaserJet_Pro is idle.  enabled since today" } });
+    const r = await runRecipe({ id: "add-printer", label: "" }, deps);
+    expect(r).toMatchObject({ ok: true, message: "Printer “HP LaserJet Pro” is added and shows as Ready." });
+    expect(ran).toContain(addPrinterCommand(HP));
+  });
+  it("gives up (so the person picks) when there are none or several", async () => {
+    expect((await runRecipe({ id: "add-printer", label: "" }, fakeDeps({ lpinfo: { code: 0, output: "" } }).deps)).ok).toBe(false);
+    const two = `network ${HP}\nnetwork dnssd://Canon._ipp._tcp.local./?uuid=9`;
+    expect((await runRecipe({ id: "add-printer", label: "" }, fakeDeps({ lpinfo: { code: 0, output: two } }).deps)).message).toMatch(/2 printers/);
+  });
+});
+
+describe("opening an app", () => {
+  it("finds Zoom under its real file name and checks it's running", async () => {
+    const { deps, ran } = fakeDeps();
+    const r = await runRecipe({ id: "open-app", label: "", app: "Zoom" }, deps);
+    expect(r).toMatchObject({ ok: true, message: "Zoom is open and running." });
+    expect(ran[0]).toBe("open '/Applications/zoom.us.app'");
+  });
+  it("does not claim a launch command proves the app is running", async () => {
+    const { deps } = fakeDeps({ pgrep: { code: 1, output: "" } });
+    const r = await runRecipe({ id: "open-app", label: "", app: "Zoom" }, deps);
+    expect(r.ok).toBe(true);
+    expect(r.message).toContain("couldn't verify");
+    expect(r.evidence.at(-1)).toMatchObject({ kind: "after", code: 1, outcome: "unknown" });
+    const p = planSteps([manual("Open Zoom")], { kind: "clipboard", text: "Open Zoom" }).steps[0];
+    const result = await runPlannedStep(p, { approve: async () => true, waitForUser: async () => "done" }, { recipeDeps: deps });
+    expect(result.status).toBe("done-unverified");
+  });
+});
+
+describe("running click steps", () => {
+  const steps: Step[] = [
+    { id: "1", title: "Open Printers & Scanners", explanation: "", kind: "manual" },
+    { id: "2", title: "Click Add Printer", explanation: "", kind: "manual", clickTarget: "Add Printer, Scanner or Fax…" },
+  ];
+  const page = { kind: "webpage" as const, text: "Add a printer", location: "https://help.example.com" };
+
+  it("does the action once and covers the other steps", async () => {
+    const plan = planSteps(steps, page);
+    const { deps } = fakeDeps({ lpinfo: { code: 0, output: `network ${HP}` }, "lpstat -p": { code: 0, output: "printer HP_LaserJet_Pro is idle." } });
+    let asked = 0;
+    const hooks: RunHooks = { approve: async () => true, waitForUser: async () => (asked++, "done") };
+    const opts = { recipesTried: new Map(), recipeDeps: deps };
+    const a = await runPlannedStep(plan.steps[0], hooks, opts);
+    const b = await runPlannedStep(plan.steps[1], hooks, opts);
+    expect(a.status).toBe("done");
+    expect(b.message).toBe("Performed together with step 1.");
+    expect(b.status).toBe("done");
+    expect(b.evidence).toEqual(a.evidence);
+    expect(asked).toBe(0);
+  });
+
+  it("falls back to the person, and tells them why", async () => {
+    const plan = planSteps(steps, page);
+    const { deps, ran } = fakeDeps({ lpinfo: { code: 0, output: "" } });
+    const notes: (string | undefined)[] = [];
+    const hooks: RunHooks = { approve: async () => true, waitForUser: async (_p, note) => (notes.push(note), "done") };
+    const opts = { recipesTried: new Map(), recipeDeps: deps };
+    await runPlannedStep(plan.steps[0], hooks, opts);
+    await runPlannedStep(plan.steps[1], hooks, opts);
+    expect(notes[0]).toMatch(/couldn't find a printer/);
+    expect(notes[1]).toBeUndefined();
+    expect(ran.filter((c) => c.startsWith("lpinfo")).length).toBe(1);
+  });
+});
+
+describe("sound-output recipe", () => {
+  const outs = (defaultId: number) => [
+    { id: 1, name: "Dad’s AirPods Pro", transport: "bluetooth", default: defaultId === 1 },
+    { id: 2, name: "MacBook Air Speakers", transport: "built-in", default: defaultId === 2 },
+  ];
+  it("picks the built-in speakers and checks they're in use", async () => {
+    let current = 1;
+    const deps = {
+      ...realRecipeDeps,
+      wait: async () => {},
+      outputs: { list: async () => outs(current), set: async (id: number) => void (current = id) },
+    };
+    const r = await runRecipe({ id: "sound-output", label: "x" }, deps);
+    expect(r.ok).toBe(true);
+    expect(current).toBe(2);
+    expect(r.evidence[0]).toMatchObject({ code: 0 });
+  });
+  it("says so when it didn't switch", async () => {
+    const deps = { ...realRecipeDeps, wait: async () => {}, outputs: { list: async () => outs(1), set: async () => {} } };
+    const r = await runRecipe({ id: "sound-output", label: "x" }, deps);
+    expect(r.ok).toBe(false);
+    expect(r.evidence[0]).toMatchObject({ code: 1 });
+  });
+  it("is chosen for the 'pick where sound plays' step", () => {
+    const step = { id: "1", title: "Pick where sound plays", kind: "manual" as const, explanation: "Pick your Mac's speakers" };
+    expect(recipeFor(step)?.id).toBe("sound-output");
+  });
+});
+
+describe("checks stay verifiable", () => {
+  it("the sound recipe leaves a passed check, so the step counts as verified", async () => {
+    let current = 1;
+    const outs = () => [
+      { id: 1, name: "AirPods", transport: "bluetooth", default: current === 1 },
+      { id: 2, name: "MacBook Air Speakers", transport: "built-in", default: current === 2 },
+    ];
+    const deps = { ...realRecipeDeps, wait: async () => {}, outputs: { list: async () => outs(), set: async (id: number) => void (current = id) } };
+    const r = await runRecipe({ id: "sound-output", label: "x" }, deps);
+    expect(verifiedStep({ id: "1", status: "done", message: "", evidence: r.evidence })).toBe(true);
+  });
+
+  it("a screen look from autopilot does not stop a real passing check from verifying the step", () => {
+    const look = { kind: "run" as const, command: "screen look: Add the printer", code: 0, output: "printer shown" };
+    const check = { kind: "after" as const, outcome: "passed" as const, command: "lpstat -p X", code: 0, output: "idle" };
+    expect(verifiedStep({ id: "1", status: "done", message: "", evidence: [look, check] })).toBe(true);
+  });
+});

@@ -1,0 +1,142 @@
+// The contract between the app (main.ts) and its window: the helper bar.
+// The windows are plain JS (no build step), so they follow these shapes by hand.
+// Every message goes through preload.cjs: window.calhack.send(channel, data) / window.calhack.on(channel, cb).
+// All text shown to the person is plain, friendly English. Pages insert it as text, never as HTML.
+
+// ---------------- App → helper bar: channel "bar" ----------------
+
+/** What the bar shows. The app sends the whole state each time something changes. */
+export type BarState =
+  | { phase: "hidden" }
+  /** Just pressed the hotkey: "Let me take a look…" */
+  | { phase: "looking"; message: string }
+  /** Nothing useful on screen, or the person tapped the mic/typing box: Siri-style question. */
+  /** note: a short explanation shown under the question (the question itself stays short, and is what's spoken). */
+  | { phase: "ask"; question: string; note?: string; suggestions: string[]; listening: boolean; transcribing: boolean; heard?: string }
+  /** Running read-only checks for a problem, one by one. */
+  | { phase: "checking"; title: string; checks: CheckLine[] }
+  /** Ready to act: the goal, what's wrong (for fixes), the plan in plain words, and OK. */
+  | {
+      phase: "plan";
+      goal: string;
+      /** For fixes: one plain sentence, e.g. "Your printer is paused and has 3 stuck jobs." */
+      problem?: string;
+      steps: StepLine[];
+      /** Anything done differently from the page, or unsafe steps that will be skipped. */
+      notes: Note[];
+      okLabel: string; // e.g. "OK, fix it" / "OK, do it" / "Yes, install"
+      cancelLabel: string; // e.g. "Not now"
+      source?: string; // e.g. "From support.apple.com" or "From the page you're reading"
+    }
+  /** Working through the steps. */
+  /** openEnded: the agent doesn't know the number of steps ahead, so it shows "Step 3", not "Step 3 of 3". */
+  | { phase: "working"; goal: string; current: number; total: number; line: string; steps: StepLine[]; detail: DetailLine[]; openEnded?: boolean }
+  /** A question that needs a clear yes or no. Big removals add typeToConfirm (the person types the folder's name). */
+  | { phase: "confirm"; title: string; message: string; details?: string[]; yes: string; no: string; typeToConfirm?: string; tone?: "normal" | "danger" }
+  /** A teaching screen: how to do something yourself (Halo won't do it, e.g. it can't be undone). */
+  | { phase: "explain"; title: string; paragraphs: string[]; steps?: string[] }
+  /** A step needs the person: an OK for a flagged step, or a click they must do themselves. */
+  | { phase: "needs-you"; goal: string; stepId: string; kind: "approve" | "manual"; question: string; why: string[]; command?: string }
+  /** Finished: the receipt. */
+  /** canContinue: the person pressed Stop; "Continue" picks the task up where it stopped. */
+  | { phase: "done"; receipt: ReceiptView; steps: StepLine[]; detail: DetailLine[]; canRetry: boolean; canSendSummary: boolean; canContinue?: boolean }
+  | { phase: "error"; message: string };
+
+export interface CheckLine {
+  label: string; // "Printer is connected"
+  status: "pending" | "running" | "ok" | "problem" | "unknown";
+  detail?: string; // "3 print jobs are stuck"
+}
+
+export interface StepLine {
+  id: string;
+  /** Plain words, e.g. "Download Zoom from zoom.us, Zoom's own website". Never a raw command. */
+  text: string;
+  status: "todo" | "running" | "done" | "unverified" | "skipped" | "blocked" | "failed" | "waiting";
+  /** Short reason when skipped/blocked/failed. */
+  note?: string;
+}
+
+export interface Note {
+  tone: "info" | "warn" | "blocked";
+  text: string;
+}
+
+/** "Show what's happening": the real commands and Droid's log, for judges. Hidden by default. */
+export interface DetailLine {
+  stepId?: string;
+  text: string; // e.g. "✅ Allowed: brew install --cask zoom" or "Run by Droid (Factory)"
+  mono?: boolean; // show in a code font
+}
+
+export interface ReceiptView {
+  /** answered = a question was answered; cant-do = Halo won't do it (e.g. it can't be undone). */
+  verdict: "done" | "answered" | "not-done" | "cant-do" | "couldnt-verify";
+  /** The answer or what was done, in a few plain lines. */
+  lines?: string[];
+  headline: string; // "Fixed. Your printer is Ready."
+  /** Before/after for fixes, e.g. { label: "Printer", before: "Paused, 3 stuck jobs", after: "Ready" }. */
+  beforeAfter: { label: string; before: string; after: string }[];
+  proofs: { claim: string; checks: string[] }[]; // checks = the commands that passed
+  problems: string[];
+  reviewedBy: "claude" | "rules" | "agent";
+}
+
+// ---------------- App → helper bar: channel "say" ----------------
+
+/**
+ * Something to say out loud AND show as a caption (captions are always on).
+ * Short and calm. Never a raw command.
+ */
+export interface SayMessage {
+  text: string;
+  /** "now" interrupts what's being said; "queue" waits its turn. */
+  mode: "now" | "queue";
+}
+
+// ---------------- Helper bar → app ----------------
+
+export type BarToApp =
+  | { channel: "bar-ok" } // the OK button on "plan"
+  | { channel: "bar-confirm"; data: { yes: boolean; typed?: string } } // the answer on "confirm"
+  | { channel: "bar-explain-ok" } // closes "explain"
+  | { channel: "bar-cancel" }
+  | { channel: "bar-stop" }
+  | { channel: "bar-retry" }
+  | { channel: "bar-answer"; data: { text: string } } // typed answer, or a suggestion chip
+  | { channel: "bar-approve"; data: { stepId: string; yes: boolean } }
+  | { channel: "bar-manual"; data: { stepId: string; answer: "done" | "skip" } }
+  | { channel: "bar-send-summary" } // copies a "here's what I tried" summary to the clipboard
+  | { channel: "bar-mic-start" } // hold-to-talk pressed
+  | { channel: "bar-mic-audio"; data: { wav: ArrayBuffer } } // hold-to-talk released: 16 kHz mono 16-bit WAV
+  | { channel: "bar-mic-cancel" }
+  | { channel: "bar-speaking"; data: { on: boolean } } // the voice started or stopped (the buddy's mouth moves)
+  | { channel: "bar-rect"; data: { x: number; y: number; width: number; height: number } }; // where the card is, so clicks around it pass through
+
+
+// ---------------- App → pointer layer: channel "pointer" ----------------
+
+/**
+ * A ring and a short label right on the thing the person should click (when a part is theirs, like a password or a
+ * personal choice). The layer covers the main display, lets every click pass through, and is kept out of screenshots.
+ * x, y are screen points on the main display, (0,0) at its top-left.
+ */
+export type PointerCommand = { show: true; x: number; y: number; label: string } | { show: false };
+
+// ---------------- App → buddy layer: channel "buddy" ----------------
+
+/**
+ * Halo, the red buddy. It sits on the bar's card, takes a pose for each moment, and hops over to point at the thing the
+ * person should click. The layer covers the main display, lets every click pass through, and is kept out of screenshots.
+ * x, y are screen points on the main display, (0,0) at its top-left. CALHACK_BUDDY=0 turns it off (the plain ring is used).
+ */
+export type BuddyPose = "idle" | "wave" | "scan" | "think" | "type" | "carry" | "stop" | "point" | "celebrate" | "sad" | "talk";
+
+export type BuddyCommand =
+  | { type: "show"; x: number; y: number; pose?: BuddyPose } // appear (pop in) at a point
+  | { type: "hide" }
+  | { type: "hop"; x: number; y: number; pose?: BuddyPose; label?: string } // jump in an arc to a point, then take the pose
+  | { type: "pose"; pose: BuddyPose }
+  | { type: "point"; x: number; y: number; label: string } // hop next to a spot and point at it, with a ring and a label
+  | { type: "scan"; rect: { x: number; y: number; width: number; height: number } } // look around an area
+  | { type: "talking"; on: boolean };
