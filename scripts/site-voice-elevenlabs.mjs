@@ -41,18 +41,24 @@ const LINES = {
   "click-ask": [PERSON, "[worried] This website says I have to press some keys to prove I'm human. Is that okay?"],
   "click-warn": [HALO, "[firmly] Stop. Don't press those. That page secretly copied a command, and pasting it would let strangers into your computer."],
   "click-done": [HALO, "Nothing was pasted, so your computer is safe. Close this page, and don't come back to it."],
-  "text-ask": [READER, "[frustrated] I can't read this. The words are too small."],
-  "text-offer": [HALO, "I'll make the text bigger everywhere on your computer. Okay?"],
-  "text-yes": [READER, "Yes, please."],
-  "text-done": [HALO, "[warmly] Done. Everything is bigger now. Tell me if you want it even larger."],
+  // 3. Text size. A calmer delivery (higher stability) for George.
+  "text-ask": [READER, "I can't read this. The writing is far too small.", 0.7],
+  "text-offer": [HALO, "I'll make the text easier to read, everywhere on your computer. Okay?"],
+  "text-yes": [READER, "Yes, please.", 0.7],
+  "text-done": [HALO, "[warmly] Done. That should be much easier to read now. Just say if you'd like it changed again."],
+  // 4. A printer that stopped working after an update: Halo installs the new driver from Windows Update.
+  "driver-ask": [PERSON, "[annoyed] My printer stopped working after the last update. Can you fix it?"],
+  "driver-found": [HALO, "Your printer's driver is out of date, and Windows has a newer one waiting. I'll install it. Okay?"],
+  "driver-yes": [PERSON, "Go ahead."],
+  "driver-done": [HALO, "[warmly] Done. The new driver is installed, and I printed a test page to check. Your printer works again."],
 };
 
-async function record(voiceId, text, file) {
+async function record(voiceId, text, file, stability = 0.4) {
   const audio = await client.textToSpeech.convert(voiceId, {
     text,
     modelId: MODEL,
     outputFormat: "mp3_44100_128",
-    voiceSettings: { stability: 0.4, similarityBoost: 0.75 }, // conversational: expressive but steady
+    voiceSettings: { stability, similarityBoost: 0.75 }, // 0.4: conversational, expressive but steady
   });
   await pipeline(Readable.fromWeb(audio), createWriteStream(file));
   console.log(`${file.split(/[\\/]/).pop()}: ${text}`);
@@ -73,7 +79,7 @@ if (process.argv.includes("--samples")) {
   mkdirSync(out, { recursive: true });
   // --only a,b re-records just those lines.
   const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7).split(",");
-  for (const [name, [voiceId, text]] of Object.entries(LINES)) {
-    if (!only || only.includes(name)) await record(voiceId, text, join(out, `${name}.mp3`));
+  for (const [name, [voiceId, text, stability]] of Object.entries(LINES)) {
+    if (!only || only.includes(name)) await record(voiceId, text, join(out, `${name}.mp3`), stability);
   }
 }

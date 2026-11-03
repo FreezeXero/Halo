@@ -219,6 +219,44 @@
     .mic-bars i { width: 3px; background: #6fdba0; border-radius: 1px; animation: vlvl 0.8s ease-in-out infinite; }
     .mic-bars i:nth-child(2) { animation-delay: -0.3s; } .mic-bars i:nth-child(3) { animation-delay: -0.55s; } .mic-bars i:nth-child(4) { animation-delay: -0.15s; }
     @media (max-width: 880px) { .m-side { display: none; } }
+    #v-driver { gap: 12px; padding: 14px 14px 0; }
+    .settings { flex: 1; display: flex; min-width: 0; background: #f3f3f3; color: #1b1b1b; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.45); font: 11.5px/1.4 "Segoe UI", var(--sans); }
+    .s-side { width: 150px; flex: none; padding: 12px 8px; }
+    .s-user { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .s-user b { display: block; font-size: 11.5px; }
+    .s-user small { color: #666; font-size: 10px; }
+    .s-av { width: 30px; height: 30px; border-radius: 50%; background: #c7d7ee; display: grid; place-items: center; font-weight: 600; color: #234; }
+    .s-find { background: #fff; border: 1px solid #ddd; border-bottom-color: #888; border-radius: 4px; padding: 4px 8px; color: #777; margin-bottom: 8px; }
+    .s-nav { padding: 5px 10px; border-radius: 4px; color: #222; position: relative; }
+    .s-nav.on { background: #e5e5e5; font-weight: 600; }
+    .s-nav.on::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: #0067c0; }
+    .s-main { flex: 1; min-width: 0; padding: 14px 16px; }
+    .s-crumb { font-size: 15px; margin-bottom: 12px; color: #555; }
+    .s-crumb b { color: #111; font-weight: 600; }
+    .s-crumb span { margin: 0 4px; }
+    .s-group { background: #fff; border: 1px solid #e3e3e3; border-radius: 6px; padding: 10px 12px; }
+    .s-head { font-weight: 600; margin-bottom: 6px; }
+    .s-head small { color: #777; font-weight: 400; margin-left: 6px; }
+    .s-row { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px solid #f0f0f0; }
+    .s-row b { display: block; font-weight: 400; }
+    .s-row small { color: #777; font-size: 10px; }
+    .s-check { width: 14px; height: 14px; flex: none; margin-top: 2px; border: 1px solid #8a8a8a; border-radius: 3px; position: relative; transition: background 0.2s, border-color 0.2s; }
+    .s-check.on { background: #0067c0; border-color: #0067c0; }
+    .s-check.on::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+    .s-install { display: inline-block; margin-top: 8px; padding: 5px 12px; border-radius: 4px; background: #e1e1e1; color: #888; transition: background 0.2s, color 0.2s; }
+    .s-install.ready { background: #0067c0; color: #fff; }
+    .s-progress { margin-top: 10px; display: none; }
+    .s-progress.on { display: block; }
+    .s-progress i { display: block; height: 4px; border-radius: 2px; background: #0067c0; width: 0; transition: width 0.25s linear; margin-bottom: 4px; }
+    .s-progress span { color: #555; font-size: 10.5px; }
+    .printer { width: 150px; flex: none; align-self: flex-start; background: #17171b; border: 1px solid var(--hair-2); border-radius: 8px; padding: 10px 12px; font-size: 11.5px; transition: border-color 0.4s; }
+    .printer b { display: block; font-size: 12.5px; margin: 2px 0; }
+    .printer em { font-style: normal; color: #ff8a7a; }
+    .printer.fixed { border-color: rgba(111, 219, 160, 0.55); }
+    .printer.fixed em { color: #6fdba0; }
+    .pick-row { grid-template-columns: repeat(4, 1fr); }
+    @media (max-width: 1100px) { .pick-row { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 880px) { .pick-row { grid-template-columns: 1fr; } .s-side { display: none; } .printer { display: none; } }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -356,6 +394,7 @@
           <button type="button" class="pick-card" data-scene="0"><span class="txt"><span class="num">01 · DOCTOR'S VISIT</span>"Get me ready for my doctor's visit"</span><span class="go" aria-hidden="true"></span></button>
           <button type="button" class="pick-card" data-scene="1"><span class="txt"><span class="num">02 · SCAM</span>"A website says to prove I'm human"</span><span class="go" aria-hidden="true"></span></button>
           <button type="button" class="pick-card" data-scene="2"><span class="txt"><span class="num">03 · QUICK FIX</span>"The words are too small"</span><span class="go" aria-hidden="true"></span></button>
+          <button type="button" class="pick-card" data-scene="3"><span class="txt"><span class="num">04 · DRIVERS</span>"My printer stopped after an update"</span><span class="go" aria-hidden="true"></span></button>
         </div>
       </div>
       <div class="screen" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
@@ -438,6 +477,36 @@
             <div class="mail-from"><b>Sam</b> &middot; Photos from Saturday</div>
             <p>Hi Grandpa! Here are the photos from the game on Saturday. You were right about the weather. Can't wait to see you next week!</p>
             <div class="photos"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="view page" id="v-driver">
+          <div class="settings" id="settings">
+            <div class="s-side">
+              <div class="s-user"><span class="s-av">R</span><div><b>Robert Hayes</b><small>Local account</small></div></div>
+              <div class="s-find">Find a setting</div>
+              <div class="s-nav">Home</div>
+              <div class="s-nav">System</div>
+              <div class="s-nav">Bluetooth &amp; devices</div>
+              <div class="s-nav">Network &amp; internet</div>
+              <div class="s-nav">Apps</div>
+              <div class="s-nav">Accessibility</div>
+              <div class="s-nav on">Windows Update</div>
+            </div>
+            <div class="s-main">
+              <div class="s-crumb">Windows Update <span>&rsaquo;</span> Advanced options <span>&rsaquo;</span> <b>Optional updates</b></div>
+              <div class="s-group">
+                <div class="s-head">Driver updates <small>2 available</small></div>
+                <div class="s-row" id="drv-printer"><span class="s-check" id="drv-check"></span><div><b>HP Inc. &ndash; Printer &ndash; 61.312.04</b><small>For: HP OfficeJet 3830</small></div></div>
+                <div class="s-row"><span class="s-check"></span><div><b>Realtek &ndash; Audio &ndash; 6.0.9786</b><small>For: Realtek(R) Audio</small></div></div>
+                <div class="s-install" id="drv-install">Download &amp; install</div>
+                <div class="s-progress" id="drv-progress"><i id="drv-bar"></i><span id="drv-status">Downloading&hellip; 0%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="printer" id="printer">
+            <span class="mono">Printer</span>
+            <b>HP OfficeJet 3830</b>
+            <em id="printer-state">Driver error &middot; won't print</em>
           </div>
         </div>
         <div class="target" id="target"></div>
@@ -562,7 +631,7 @@
     let audio = null;
     // The lines were recorded with Halo's own voice (scripts/site-voice.py), so the page sounds like the app.
     const clips = {};
-    for (const k of ["visit-ask", "visit-plan", "visit-form", "visit-yes", "visit-done", "click-ask", "click-warn", "click-done", "text-ask", "text-offer", "text-yes", "text-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
+    for (const k of ["visit-ask", "visit-plan", "visit-form", "visit-yes", "visit-done", "click-ask", "click-warn", "click-done", "text-ask", "text-offer", "text-yes", "text-done", "driver-ask", "driver-found", "driver-yes", "driver-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
     let playing = null;
     function speak(key) {
       const clip = clips[key];
@@ -756,18 +825,55 @@
         $("mail").classList.remove("big");
         at(orb, 86, 62);
         await pause(600);
-        await show("You", "I can't read this. The words are too small.", { min: 2400, kind: "you", clip: "text-ask", id });
+        await show("You", "I can't read this. The writing is far too small.", { min: 2400, kind: "you", clip: "text-ask", id });
         zoom($("mail"), 1.3);
         onto(orb, $("mail"), "center");
         await looking("Checking your display settings…", 1200);
         orb.classList.remove("busy");
-        await show("Halo", "I'll make the text bigger everywhere on your computer. Okay?", { min: 2300, clip: "text-offer", id });
+        await show("Halo", "I'll make the text easier to read, everywhere on your computer. Okay?", { min: 2300, clip: "text-offer", id });
         await show("You", "Yes, please.", { min: 1000, kind: "you", clip: "text-yes", id });
         zoom(null);
         $("mail").classList.add("big");
         at(orb, 86, 62);
         chime();
-        await show("Done", "Done. Everything is bigger now. Tell me if you want it even larger.", { min: 2800, clip: "text-done", id });
+        await show("Done", "Done. That should be much easier to read now. Just say if you'd like it changed again.", { min: 2800, clip: "text-done", id });
+      },
+      // 4. A printer that stopped after an update: Halo finds the newer driver in Windows Update and installs it.
+      async (id, pause, looking) => {
+        scene(3, "Settings", "v-driver");
+        $("drv-check").classList.remove("on"); $("drv-install").classList.remove("ready");
+        $("drv-progress").classList.remove("on"); $("drv-bar").style.width = "0";
+        $("printer").classList.remove("fixed"); $("printer-state").textContent = "Driver error · won't print";
+        at(orb, 50, 70);
+        await pause(500);
+        await show("You", "My printer stopped working after the last update. Can you fix it?", { min: 3000, kind: "you", clip: "driver-ask", id });
+        onto(orb, $("printer"), "center");
+        await looking("Checking your printer and its driver…", 1300);
+        zoom($("drv-printer"), 1.4);
+        onto(orb, $("drv-printer"), "center");
+        orb.classList.remove("busy");
+        await show("Halo", "Your printer's driver is out of date, and Windows has a newer one waiting. I'll install it. Okay?", { min: 3400, clip: "driver-found", id });
+        await show("You", "Go ahead.", { min: 900, kind: "you", clip: "driver-yes", id });
+        await click($("drv-check"), id);
+        $("drv-check").classList.add("on"); $("drv-install").classList.add("ready");
+        await click($("drv-install"), id);
+        $("cursor").classList.remove("on");
+        $("drv-progress").classList.add("on");
+        orb.classList.add("busy"); eyebrow.textContent = "Halo is working"; line.textContent = "Installing the printer driver…";
+        for (let p = 0; p <= 100; p += 5) {
+          $("drv-bar").style.width = p + "%";
+          $("drv-status").textContent = p < 50 ? `Downloading… ${p * 2}%` : p < 100 ? `Installing… ${(p - 50) * 2}%` : "Installed";
+          await pause(110);
+        }
+        zoom(null);
+        line.textContent = "Printing a test page…";
+        onto(orb, $("printer"), "center");
+        await pause(1200);
+        orb.classList.remove("busy");
+        $("printer").classList.add("fixed"); $("printer-state").textContent = "Ready · test page printed";
+        at(orb, 50, 70);
+        chime();
+        await show("Done", "Done. The new driver is installed, and I printed a test page to check. Your printer works again.", { min: 3400, clip: "driver-done", id });
       },
     ];
 
