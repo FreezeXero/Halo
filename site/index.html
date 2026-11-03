@@ -181,6 +181,44 @@
     .stop-chip { position: absolute; left: 50%; top: 62%; transform: translate(-50%, 8px); padding: 10px 16px; border-radius: 999px; background: #d93025; color: #fff; font-weight: 600; font-size: 14px; white-space: nowrap; opacity: 0; transition: opacity 0.4s, transform 0.4s; box-shadow: 0 10px 30px rgba(217, 48, 37, 0.45); }
     .stop-chip.on { opacity: 1; transform: translate(-50%, 0); }
     @media (max-width: 880px) { .visit { flex-direction: column; overflow: auto; } .stop-chip { white-space: normal; text-align: center; width: 80%; } }
+    .visit { gap: 12px; padding: 12px 12px 0; }
+    .mailapp { flex: 1.65; display: flex; min-width: 0; background: #f6f8fc; color: #1f1f1f; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.45); font-size: 11.5px; line-height: 1.45; }
+    .m-side { width: 112px; flex: none; padding: 10px 8px; }
+    .m-compose { white-space: nowrap; background: #c2e7ff; color: #001d35; border-radius: 12px; padding: 9px 10px; font-weight: 600; margin-bottom: 10px; }
+    .m-item { display: flex; justify-content: space-between; padding: 5px 10px; border-radius: 0 12px 12px 0; margin-left: -8px; padding-left: 18px; color: #444; }
+    .m-item.on { background: #d3e3fd; color: #001d35; font-weight: 600; }
+    .m-main { flex: 1; min-width: 0; background: #fff; border-radius: 12px 0 0 0; margin-top: 8px; padding: 0 16px 12px; overflow: hidden; }
+    .m-search { margin: 0 -16px 0; padding: 8px 14px; background: #eaf1fb; color: #5f6368; border-radius: 0; }
+    .m-tools { display: flex; gap: 14px; padding: 7px 0; color: #5f6368; border-bottom: 1px solid #eee; }
+    .m-count { margin-left: auto; font-size: 10.5px; }
+    .m-subject { font-size: 15px; margin: 10px 0 8px; }
+    .m-tag { font-size: 10px; background: #ddd; border-radius: 3px; padding: 1px 5px; vertical-align: 2px; color: #444; }
+    .m-from { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+    .m-av { width: 26px; height: 26px; flex: none; border-radius: 50%; background: #0b8043; color: #fff; display: grid; place-items: center; font-weight: 600; }
+    .m-who small, .m-time { color: #5f6368; font-size: 10.5px; }
+    .m-time { margin-left: auto; white-space: nowrap; }
+    .m-body p { margin: 0 0 6px; }
+    .m-body .link { color: #1a62d6; text-decoration: underline; }
+    .m-todo { margin: 0 0 6px; padding-left: 18px; }
+    .m-todo li { padding: 1px 4px; border-radius: 3px; transition: background 0.3s, color 0.3s; }
+    .m-todo li.doing { background: #fff4d1; }
+    .m-todo li.done { color: #0b8043; }
+    .m-todo li.done::after { content: "  \2713"; font-weight: 700; }
+    .m-todo li.left { color: #8a8a8a; }
+    .steps-col { flex: 1; gap: 7px; min-width: 0; }
+    .card-step { padding: 7px 11px; font-size: 11px; }
+    .card-step b { font-size: 12px; }
+    .field { margin-top: 3px; }
+    .field i { width: 78px; }
+    .submit { margin-top: 6px; padding: 3px 12px; }
+    .card-step.left { border-style: dashed; }
+    .card-step.left .mono::after { content: "  \2022 for you"; color: var(--gold); }
+    .cam-test { display: flex; align-items: center; gap: 7px; margin-top: 3px; flex-wrap: wrap; }
+    .cam-dot { width: 9px; height: 9px; border-radius: 50%; background: #6fdba0; box-shadow: 0 0 8px #6fdba0; }
+    .mic-bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; margin-left: 6px; }
+    .mic-bars i { width: 3px; background: #6fdba0; border-radius: 1px; animation: vlvl 0.8s ease-in-out infinite; }
+    .mic-bars i:nth-child(2) { animation-delay: -0.3s; } .mic-bars i:nth-child(3) { animation-delay: -0.55s; } .mic-bars i:nth-child(4) { animation-delay: -0.15s; }
+    @media (max-width: 880px) { .m-side { display: none; } }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -324,10 +362,38 @@
         <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
         <div class="cam" id="cam">
         <div class="view page visit on" id="v-visit">
-          <div class="appt" id="appt">
-            <div class="mail-from"><b>Harbor Health</b> &middot; Your video visit on Thursday</div>
-            <p>Hi Robert, your video visit with <b>Dr. Patel</b> is on <b>Thursday, Nov 6 at 10:30 AM</b>. Appointment number <b>A-48213</b>.</p>
-            <p>Please <span class="link" id="checkin-link">check in here</span> before your visit. When it's time, <span class="link">join your visit</span>.</p>
+          <div class="mailapp" id="appt">
+            <div class="m-side">
+              <div class="m-compose">&#9998;&nbsp; Compose</div>
+              <div class="m-item on"><span>Inbox</span><b>3</b></div>
+              <div class="m-item"><span>Starred</span></div>
+              <div class="m-item"><span>Snoozed</span></div>
+              <div class="m-item"><span>Sent</span></div>
+              <div class="m-item"><span>Drafts</span></div>
+            </div>
+            <div class="m-main">
+              <div class="m-search">&#9906;&nbsp; Search mail</div>
+              <div class="m-tools"><span>&larr;</span><span>&#9744;</span><span>&#128465;</span><span>&#9993;</span><span class="m-count">1 of 48</span></div>
+              <div class="m-subject">Your video visit is on Thursday <span class="m-tag">Inbox</span></div>
+              <div class="m-from">
+                <span class="m-av">H</span>
+                <div class="m-who"><b>Harbor Health</b> <small>&lt;visits@harborhealth.example&gt;</small><br><small>to me</small></div>
+                <small class="m-time">9:14 AM (2 hours ago)</small>
+              </div>
+              <div class="m-body">
+                <p>Hi Robert,</p>
+                <p>Your video visit with <b>Dr. Patel</b> is on <b>Thursday, Nov 6 at 10:30 AM</b> (appointment <b>A-48213</b>).</p>
+                <p><b>Before your visit, please:</b></p>
+                <ol class="m-todo">
+                  <li id="todo-1">Add the visit to your calendar</li>
+                  <li id="todo-2"><span class="link" id="checkin-link">Check in online</span></li>
+                  <li id="todo-3">Install Zoom on your computer</li>
+                  <li id="todo-4">Test your camera and microphone</li>
+                  <li id="todo-5">Have your list of current medications ready</li>
+                </ol>
+                <p>When it's time, <span class="link">join your visit</span>.</p>
+              </div>
+            </div>
           </div>
           <div class="steps-col">
             <div class="card-step" id="st-cal">
@@ -338,14 +404,22 @@
             <div class="card-step" id="st-form">
               <span class="mono">Check-in &middot; harborhealth.example</span>
               <div class="field"><i>Name</i><u data-fill="Robert Hayes"></u></div>
-              <div class="field"><i>Appointment #</i><u data-fill="A-48213"></u></div>
+              <div class="field"><i>Appointment</i><u data-fill="A-48213"></u></div>
               <div class="field"><i>Visit</i><u data-fill="Video visit, Dr. Patel"></u></div>
               <div class="submit" id="submit">Submit</div>
             </div>
             <div class="card-step" id="st-zoom">
               <span class="mono">Zoom</span>
-              <b>Installed and ready</b>
+              <b>Installed</b>
               <em>Join opens Thursday at 10:25 AM</em>
+            </div>
+            <div class="card-step" id="st-cam">
+              <span class="mono">Camera and mic</span>
+              <div class="cam-test"><span class="cam-dot"></span><b>Camera works</b><span class="mic-bars"><i></i><i></i><i></i><i></i></span><b>Mic works</b></div>
+            </div>
+            <div class="card-step left" id="st-meds">
+              <span class="mono">Medication list</span>
+              <em>Private, so Halo left this one for you</em>
             </div>
           </div>
         </div>
@@ -592,32 +666,39 @@
     }
 
     const SCENES = [
-      // 1. A doctor's video visit: Halo reads the email, adds it to the calendar, fills the check-in, gets Zoom ready.
+      // 1. A doctor's video visit: Halo works through the email's to-do list, one task at a time.
       async (id, pause, looking) => {
         scene(0, "mail · inbox", "v-visit");
-        ["st-cal", "st-form", "st-zoom"].forEach((k) => $(k).classList.remove("on", "done"));
+        const CARDS = ["st-cal", "st-form", "st-zoom", "st-cam", "st-meds"];
+        CARDS.forEach((k) => $(k).classList.remove("on", "done"));
+        for (let i = 1; i <= 5; i++) $("todo-" + i).className = "";
         document.querySelectorAll("#st-form u").forEach((u) => { u.textContent = ""; });
-        $("submit").classList.remove("ready", "pressed");
+        $("submit").classList.remove("ready", "pressed"); $("submit").textContent = "Submit";
+        const doing = (n) => $("todo-" + n).className = "doing";
+        const done = (n, card) => { $("todo-" + n).className = "done"; $(card).classList.add("done"); };
         at(orb, 50, 70);
         await pause(500);
         await show("You", "My doctor sent me this email. Can you get me ready for the visit?", { min: 3200, kind: "you", clip: "visit-ask", id });
-        zoom($("appt"), 1.25);
-        onto(orb, $("appt"), "center");
+        zoom($("appt"), 1.22);
+        onto(orb, $("todo-3"), "center");
         await looking("Reading the email…", 1200);
         orb.classList.remove("busy");
-        await show("Halo", "Sure. I'll add it to your calendar, check you in, and get the video call ready.", { min: 2600, clip: "visit-plan", id });
+        await show("Halo", "Sure. There are four things to do. I'll add it to your calendar, check you in, install Zoom, and test your camera and microphone.", { min: 3400, clip: "visit-plan", id });
         zoom(null);
-        $("st-cal").classList.add("on");
-        await pause(700);
-        $("st-cal").classList.add("done");
-        $("url").textContent = "harborhealth.example/check-in";
+        // Calendar
+        doing(1); $("st-cal").classList.add("on");
+        await pause(800);
+        done(1, "st-cal");
+        // Check-in form: Halo fills it, the person presses Submit.
+        doing(2);
         await click($("checkin-link"), id);
+        $("url").textContent = "harborhealth.example/check-in";
         $("st-form").classList.add("on");
-        await pause(500);
+        await pause(400);
         $("cursor").classList.remove("on");
-        zoom($("st-form"), 1.3);
+        zoom($("st-form"), 1.35);
         onto(orb, $("st-form"), "center");
-        orb.classList.add("busy"); eyebrow.textContent = "Halo is filling in your check-in"; line.textContent = "Name, appointment number, visit…";
+        orb.classList.add("busy"); eyebrow.textContent = "Halo is filling in your check-in"; line.textContent = "Name, appointment, visit…";
         for (const u of document.querySelectorAll("#st-form u")) await type(u, id);
         orb.classList.remove("busy");
         $("submit").classList.add("ready");
@@ -626,16 +707,26 @@
         await show("You", "Okay. I pressed it.", { min: 1200, kind: "you", clip: "visit-yes", id });
         target.classList.remove("on");
         $("submit").classList.add("pressed"); $("submit").textContent = "Checked in";
-        $("st-form").classList.add("done");
+        done(2, "st-form");
         zoom(null);
-        $("st-zoom").classList.add("on");
-        await pause(700);
-        $("st-zoom").classList.add("done");
         $("url").textContent = "mail · inbox";
+        // Zoom, then the camera and mic test.
+        doing(3); $("st-zoom").classList.add("on");
+        onto(orb, $("st-zoom"), "center");
+        orb.classList.add("busy"); eyebrow.textContent = "Halo is working"; line.textContent = "Installing Zoom from zoom.us…";
+        await pause(1500);
+        done(3, "st-zoom");
+        doing(4); $("st-cam").classList.add("on");
+        onto(orb, $("st-cam"), "center");
+        line.textContent = "Testing your camera and microphone…";
+        await pause(1500);
+        done(4, "st-cam");
+        orb.classList.remove("busy");
+        // The medication list is personal: Halo leaves it for them.
+        $("todo-5").className = "left"; $("st-meds").classList.add("on");
         at(orb, 50, 70);
         chime();
-        await show("Done", "You're all set. It's on your calendar for Thursday at 10:30, and Zoom is ready. I'll remind you 15 minutes before.", { min: 3600, clip: "visit-done", id });
-        $("submit").textContent = "Submit";
+        await show("Done", "You're all set for Thursday at 10:30. Zoom is installed, and your camera and microphone work. Your medication list is private, so I left that one for you.", { min: 4200, clip: "visit-done", id });
       },
       // 2. A fake "verify you're human" page that copies a hidden command and asks for Windows+R, Ctrl+V, Enter.
       async (id, pause, looking) => {

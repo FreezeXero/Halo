@@ -26,23 +26,24 @@ const VOICES = {
 };
 const HALO = VOICES.sarah;
 const PERSON = VOICES.chris;
+const READER = VOICES.george; // the person in the text-size scene
 const WOMEN = new Set(["sarah", "jessica", "matilda", "lily"]);
 
 // [tags] set the delivery on Eleven v4; they aren't spoken.
 const LINES = {
   // 1. A doctor's video visit, from the email: calendar, check-in form, Zoom.
   "visit-ask": [PERSON, "[unsure] My doctor sent me this email. Can you get me ready for the visit?"],
-  "visit-plan": [HALO, "Sure. I'll add it to your calendar, check you in, and get the video call ready."],
+  "visit-plan": [HALO, "Sure. There are four things to do. I'll add it to your calendar, check you in, install Zoom, and test your camera and microphone."],
   "visit-form": [HALO, "I filled in your check-in with the details from the email. Take a look, then press Submit."],
   "visit-yes": [PERSON, "[relieved] Okay. I pressed it."],
-  "visit-done": [HALO, "[warmly] You're all set. It's on your calendar for Thursday at ten thirty, and Zoom is ready. I'll remind you fifteen minutes before."],
+  "visit-done": [HALO, "[warmly] You're all set for Thursday at ten thirty. Zoom is installed, and your camera and microphone work. Your medication list is private, so I left that one for you."],
   // 2. A fake "verify you're human" page that copies a hidden command.
   "click-ask": [PERSON, "[worried] This website says I have to press some keys to prove I'm human. Is that okay?"],
   "click-warn": [HALO, "[firmly] Stop. Don't press those. That page secretly copied a command, and pasting it would let strangers into your computer."],
   "click-done": [HALO, "Nothing was pasted, so your computer is safe. Close this page, and don't come back to it."],
-  "text-ask": [PERSON, "[frustrated] I can't read this. The words are too small."],
+  "text-ask": [READER, "[frustrated] I can't read this. The words are too small."],
   "text-offer": [HALO, "I'll make the text bigger everywhere on your computer. Okay?"],
-  "text-yes": [PERSON, "Yes, please."],
+  "text-yes": [READER, "Yes, please."],
   "text-done": [HALO, "[warmly] Done. Everything is bigger now. Tell me if you want it even larger."],
 };
 
@@ -70,5 +71,9 @@ if (process.argv.includes("--samples")) {
 } else {
   const out = join(root, "site", "audio");
   mkdirSync(out, { recursive: true });
-  for (const [name, [voiceId, text]] of Object.entries(LINES)) await record(voiceId, text, join(out, `${name}.mp3`));
+  // --only a,b re-records just those lines.
+  const only = process.argv.find((a) => a.startsWith("--only="))?.slice(7).split(",");
+  for (const [name, [voiceId, text]] of Object.entries(LINES)) {
+    if (!only || only.includes(name)) await record(voiceId, text, join(out, `${name}.mp3`));
+  }
 }
