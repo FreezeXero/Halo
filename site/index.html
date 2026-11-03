@@ -254,9 +254,72 @@
     .printer em { font-style: normal; color: #ff8a7a; }
     .printer.fixed { border-color: rgba(111, 219, 160, 0.55); }
     .printer.fixed em { color: #6fdba0; }
-    .pick-row { grid-template-columns: repeat(4, 1fr); }
-    @media (max-width: 1100px) { .pick-row { grid-template-columns: repeat(2, 1fr); } }
+    .pick-row { grid-template-columns: repeat(3, 1fr); }
     @media (max-width: 880px) { .pick-row { grid-template-columns: 1fr; } .s-side { display: none; } .printer { display: none; } }
+    .toast { position: absolute; right: 14px; bottom: 16px; z-index: 2; display: flex; gap: 10px; align-items: center; width: 290px; padding: 12px 14px; border-radius: 10px; background: rgba(16, 18, 26, 0.97); border: 1px solid rgba(255, 201, 77, 0.35); color: var(--ink); font-size: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); opacity: 0; transform: translateY(10px); transition: opacity 0.4s, transform 0.4s; }
+    .toast.on { opacity: 1; transform: none; }
+    .toast b { display: block; font-size: 12.5px; }
+    .toast small { color: var(--ink-2); }
+    .t-ring { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 2.5px solid var(--gold); box-shadow: 0 0 10px rgba(255, 201, 77, 0.6); }
+    #v-zoom { gap: 12px; padding: 14px 14px 0; }
+    .zoomapp { flex: 1; height: 74%; display: flex; flex-direction: column; background: #1c1c1e; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); font: 12px "Segoe UI", var(--sans); color: #eee; min-height: 0; }
+    .z-top { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: #242426; color: #ccc; }
+    .z-rec { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; }
+    .z-time { margin-left: auto; color: #999; }
+    .z-tiles { position: relative; flex: 1; display: grid; grid-template-columns: 1.5fr 1fr; gap: 6px; padding: 6px; min-height: 0; }
+    .z-tile { position: relative; border-radius: 6px; background: #2a2a2e; display: grid; place-items: center; overflow: hidden; border: 2px solid transparent; transition: border-color 0.3s, opacity 0.5s; }
+    .z-doc { opacity: 0.25; }
+    .z-doc.in { opacity: 1; background: linear-gradient(160deg, #2f3a4a, #232a35); }
+    .z-doc.talking { border-color: #2ecc71; }
+    .z-me { background: linear-gradient(160deg, #3a3326, #2a261e); }
+    .z-av { width: 58px; height: 58px; border-radius: 50%; background: #4a6fa5; display: grid; place-items: center; font: 400 26px var(--serif); color: #fff; }
+    .z-av.me { background: #8a6a3a; width: 44px; height: 44px; font-size: 20px; }
+    .z-name { position: absolute; left: 8px; bottom: 6px; background: rgba(0,0,0,0.55); padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+    .z-live { position: absolute; right: 8px; top: 6px; font: 10px var(--mono); color: #2ecc71; }
+    .z-bars { position: absolute; right: 10px; bottom: 8px; display: flex; gap: 2px; align-items: flex-end; height: 12px; opacity: 0; }
+    .z-doc.talking .z-bars { opacity: 1; }
+    .z-bars i { width: 3px; background: #2ecc71; border-radius: 1px; animation: vlvl 0.6s ease-in-out infinite; }
+    .z-bars i:nth-child(2) { animation-delay: -0.2s; } .z-bars i:nth-child(3) { animation-delay: -0.4s; } .z-bars i:nth-child(4) { animation-delay: -0.1s; }
+    .z-wait { position: absolute; left: 6px; top: 6px; width: calc(60% - 6px); bottom: 6px; display: grid; place-items: center; text-align: center; padding: 0 20px; color: #bbb; background: #252528; border-radius: 6px; opacity: 0; transition: opacity 0.4s; pointer-events: none; }
+    .z-wait.on { opacity: 1; }
+    .z-bar { display: flex; gap: 6px; padding: 7px 10px; background: #242426; }
+    .z-btn { padding: 4px 9px; border-radius: 4px; color: #ddd; background: #303033; display: inline-flex; align-items: center; gap: 6px; }
+    .z-lvl { display: inline-flex; gap: 1px; align-items: flex-end; height: 10px; }
+    .z-lvl b { width: 2px; background: #2ecc71; animation: vlvl 0.7s ease-in-out infinite; }
+    .z-lvl b:nth-child(2) { animation-delay: -0.25s; } .z-lvl b:nth-child(3) { animation-delay: -0.45s; }
+    .z-leave { margin-left: auto; padding: 4px 10px; border-radius: 4px; background: #e02f2f; color: #fff; }
+    .z-checks { width: 140px; flex: none; align-self: flex-start; background: #17171b; border: 1px solid var(--hair-2); border-radius: 8px; padding: 10px 12px; font-size: 12px; opacity: 0; transform: translateY(8px); transition: opacity 0.4s, transform 0.4s; }
+    .z-checks.on { opacity: 1; transform: none; }
+    .z-checks div { padding: 3px 0; color: var(--ink-3); transition: color 0.3s; }
+    .z-checks div.ok { color: #6fdba0; }
+    .z-checks div.ok::after { content: "  \2713"; font-weight: 700; }
+    #v-driver .settings { display: none; }
+    #v-driver .settings.show { display: flex; }
+    .docwin { flex: 1; height: 74%; position: relative; min-width: 0; background: #fff; color: #222; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.45); font: 12px "Segoe UI", var(--sans); }
+    .docwin.gone { display: none; }
+    .d-bar { display: flex; gap: 14px; padding: 7px 12px; background: #f3f3f3; border-bottom: 1px solid #e1e1e1; color: #444; }
+    .d-title { margin-left: auto; color: #777; }
+    .d-page { width: 62%; margin: 14px auto; padding: 16px 20px; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,0.15); min-height: 150px; }
+    .d-page h5 { margin: 0 0 8px; font: 400 18px var(--serif); }
+    .d-page p { margin: 0 0 5px; color: #333; }
+    .pdlg, .perr { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%) scale(0.96); width: 250px; background: #fff; border: 1px solid #d0d0d0; border-radius: 8px; box-shadow: 0 16px 40px rgba(0,0,0,0.35); padding: 12px 14px; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+    .pdlg.on, .perr.on { opacity: 1; transform: translate(-50%, -50%); }
+    .pdlg b { display: block; font-size: 14px; margin-bottom: 6px; }
+    .p-row { display: flex; gap: 8px; padding: 3px 0; }
+    .p-row i { width: 56px; color: #777; font-style: normal; }
+    .p-row u { text-decoration: none; }
+    .p-btn { display: inline-block; margin-top: 8px; padding: 4px 16px; border-radius: 4px; background: #0067c0; color: #fff; transition: transform 0.1s, background 0.1s; }
+    .p-btn.press { transform: scale(0.94); background: #004f94; }
+    .perr { border-color: #e8b4b0; }
+    .perr b { display: block; color: #c42b1c; font-size: 13.5px; margin-bottom: 4px; }
+    .perr p { margin: 0 0 8px; color: #333; }
+    .p-ok { display: inline-block; padding: 3px 14px; border: 1px solid #bbb; border-radius: 4px; }
+    .printing { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: #1f1f1f; color: #fff; font-size: 11.5px; white-space: nowrap; opacity: 0; transition: opacity 0.3s; }
+    .printing.on { opacity: 1; }
+    .p-spin { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #555; border-top-color: #fff; animation: spin2 0.8s linear infinite; }
+    .printing.done .p-spin { animation: none; border-color: #6fdba0; background: #6fdba0; }
+    @keyframes spin2 { to { transform: rotate(360deg); } }
+    @media (max-width: 880px) { .z-checks { display: none; } .toast { width: 70%; } }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -393,14 +456,14 @@
         <div class="pick-row nudge" id="pick-row">
           <button type="button" class="pick-card" data-scene="0"><span class="txt"><span class="num">01 · DOCTOR'S VISIT</span>"Get me ready for my doctor's visit"</span><span class="go" aria-hidden="true"></span></button>
           <button type="button" class="pick-card" data-scene="1"><span class="txt"><span class="num">02 · SCAM</span>"A website says to prove I'm human"</span><span class="go" aria-hidden="true"></span></button>
-          <button type="button" class="pick-card" data-scene="2"><span class="txt"><span class="num">03 · QUICK FIX</span>"The words are too small"</span><span class="go" aria-hidden="true"></span></button>
-          <button type="button" class="pick-card" data-scene="3"><span class="txt"><span class="num">04 · DRIVERS</span>"My printer stopped after an update"</span><span class="go" aria-hidden="true"></span></button>
+          <button type="button" class="pick-card" data-scene="2"><span class="txt"><span class="num">03 · DRIVERS</span>"My printer stopped after an update"</span><span class="go" aria-hidden="true"></span></button>
         </div>
       </div>
       <div class="screen" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
         <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
         <div class="cam" id="cam">
         <div class="view page visit on" id="v-visit">
+          <div class="toast" id="toast"><span class="t-ring"></span><div><b>Halo &middot; Thursday, 10:25 AM</b><small>Your video visit with Dr. Patel starts in 5 minutes</small></div></div>
           <div class="mailapp" id="appt">
             <div class="m-side">
               <div class="m-compose">&#9998;&nbsp; Compose</div>
@@ -462,6 +525,18 @@
             </div>
           </div>
         </div>
+        <div class="view page" id="v-zoom">
+          <div class="zoomapp" id="zoomapp">
+            <div class="z-top"><span class="z-rec"></span>Harbor Health video visit<span class="z-time">10:29 AM</span></div>
+            <div class="z-tiles">
+              <div class="z-tile z-doc" id="z-doc"><div class="z-av">P</div><div class="z-name">Dr. Patel</div><div class="z-bars"><i></i><i></i><i></i><i></i></div></div>
+              <div class="z-tile z-me"><div class="z-av me">R</div><div class="z-name">Robert Hayes (you)</div><div class="z-live">CAMERA ON</div></div>
+              <div class="z-wait on" id="z-wait">Waiting for Dr. Patel to let you in&hellip;</div>
+            </div>
+            <div class="z-bar"><span class="z-btn" id="z-mic">Mute <i class="z-lvl"><b></b><b></b><b></b></i></span><span class="z-btn">Stop video</span><span class="z-btn">Participants</span><span class="z-btn">Chat</span><span class="z-leave">Leave</span></div>
+          </div>
+          <div class="z-checks" id="z-checks"><span class="mono">Halo checked</span><div id="z-c1">Camera</div><div id="z-c2">Microphone</div><div id="z-c3">Speakers</div></div>
+        </div>
         <div class="view page" id="v-click">
           <div class="captcha" id="captcha">
             <div class="cap-row"><span class="cap-box" id="cap-box"></span><span>I'm not a robot</span><span class="cap-logo mono">verify</span></div>
@@ -472,14 +547,20 @@
           </div>
           <div class="stop-chip" id="stop-chip">&#9940; Don't press those keys. This is a scam.</div>
         </div>
-        <div class="view page" id="v-text">
-          <div class="mail" id="mail">
-            <div class="mail-from"><b>Sam</b> &middot; Photos from Saturday</div>
-            <p>Hi Grandpa! Here are the photos from the game on Saturday. You were right about the weather. Can't wait to see you next week!</p>
-            <div class="photos"><i></i><i></i><i></i></div>
-          </div>
-        </div>
         <div class="view page" id="v-driver">
+          <div class="docwin" id="docwin">
+            <div class="d-bar"><span>File</span><span>Home</span><span>Insert</span><span>Layout</span><span class="d-title">Apple pie recipe</span></div>
+            <div class="d-page">
+              <h5>Grandma's Apple Pie</h5>
+              <p>6 apples, peeled and sliced</p>
+              <p>3/4 cup sugar &middot; 1 tsp cinnamon</p>
+              <p>2 pie crusts, 1 egg for brushing</p>
+              <p>Bake at 425&deg;F for about 45 minutes, until golden.</p>
+            </div>
+            <div class="pdlg" id="pdlg"><b>Print</b><div class="p-row"><i>Printer</i><u>HP OfficeJet 3830</u></div><div class="p-row"><i>Copies</i><u>1</u></div><div class="p-btn" id="pbtn">Print</div></div>
+            <div class="perr" id="perr"><b>&#9888; Printer error</b><p>The driver for HP OfficeJet 3830 is unavailable. Windows can't print this document.</p><div class="p-ok">OK</div></div>
+            <div class="printing" id="printing"><span class="p-spin"></span>Printing "Apple pie recipe"&hellip; page 1 of 1</div>
+          </div>
           <div class="settings" id="settings">
             <div class="s-side">
               <div class="s-user"><span class="s-av">R</span><div><b>Robert Hayes</b><small>Local account</small></div></div>
@@ -631,7 +712,7 @@
     let audio = null;
     // The lines were recorded with Halo's own voice (scripts/site-voice.py), so the page sounds like the app.
     const clips = {};
-    for (const k of ["visit-ask", "visit-plan", "visit-form", "visit-yes", "visit-done", "click-ask", "click-warn", "click-done", "text-ask", "text-offer", "text-yes", "text-done", "driver-ask", "driver-found", "driver-yes", "driver-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
+    for (const k of ["visit-ask", "visit-plan", "visit-form", "visit-yes", "visit-ready", "visit-join", "visit-check", "visit-doctor", "visit-done", "click-ask", "click-warn", "click-done", "driver-ask", "driver-found", "driver-yes", "driver-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
     let playing = null;
     function speak(key) {
       const clip = clips[key];
@@ -676,11 +757,12 @@
       await wait(200);
       check(id);
       eyebrow.textContent = who;
-      line.innerHTML = kind === "you" ? `<span class="you">"${text}"</span>` : text;
+      const quoted = kind !== "halo";
+      line.innerHTML = quoted ? `<span class="you">"${text}"</span>` : text;
       line.style.opacity = 1;
-      bar.classList.toggle("you", kind === "you");
+      bar.classList.toggle("you", quoted);
       bar.classList.add("talking");
-      orb.classList.toggle("talk", kind !== "you");
+      orb.classList.toggle("talk", !quoted);
       await Promise.all([speak(clip), wait(min)]);
       bar.classList.remove("talking");
       orb.classList.remove("talk");
@@ -794,8 +876,33 @@
         // The medication list is personal: Halo leaves it for them.
         $("todo-5").className = "left"; $("st-meds").classList.add("on");
         at(orb, 50, 70);
+        await show("Halo", "You're all set for Thursday. Your medication list is private, so I left that one for you.", { min: 3200, clip: "visit-ready", id });
+        // Thursday: Halo's reminder pops up, then it joins the call for them.
+        $("toast").classList.add("on");
+        await pause(1500);
+        await show("Halo", "Robert, it's almost 10:30. Time for your visit, so I'm joining it now.", { min: 3000, clip: "visit-join", id });
+        $("toast").classList.remove("on");
+        scene(0, "Zoom · Harbor Health video visit", "v-zoom");
+        $("z-doc").classList.remove("in", "talking"); $("z-wait").classList.add("on");
+        ["z-c1", "z-c2", "z-c3"].forEach((k) => $(k).classList.remove("ok"));
+        $("z-checks").classList.remove("on");
+        await pause(700);
+        // Camera, microphone and speakers, checked one by one.
+        $("z-checks").classList.add("on");
+        onto(orb, $("z-checks"), "center");
+        orb.classList.add("busy"); eyebrow.textContent = "Halo is checking"; line.textContent = "Camera, microphone, speakers…";
+        for (const k of ["z-c1", "z-c2", "z-c3"]) { await pause(650); $(k).classList.add("ok"); }
+        orb.classList.remove("busy");
+        await show("Halo", "Your camera, microphone and speakers all work.", { min: 2400, clip: "visit-check", id });
+        // The doctor lets them in.
+        $("z-wait").classList.remove("on"); $("z-doc").classList.add("in");
+        await pause(700);
+        $("z-doc").classList.add("talking");
+        await show("Dr. Patel", "Hi Robert! It's Dr. Patel. I can see and hear you perfectly.", { min: 3000, kind: "doctor", clip: "visit-doctor", id });
+        $("z-doc").classList.remove("talking");
+        at(orb, 88, 72);
         chime();
-        await show("Done", "You're all set for Thursday at 10:30. Zoom is installed, and your camera and microphone work. Your medication list is private, so I left that one for you.", { min: 4200, clip: "visit-done", id });
+        await show("Done", "You're in. Enjoy your visit.", { min: 2400, clip: "visit-done", id });
       },
       // 2. A fake "verify you're human" page that copies a hidden command and asks for Windows+R, Ctrl+V, Enter.
       async (id, pause, looking) => {
@@ -819,36 +926,34 @@
         chime();
         await show("Done", "Nothing was pasted, so your computer is safe. Close this page, and don't come back to it.", { min: 3000, clip: "click-done", id });
       },
-      // 3. Text size: the words are too small to read.
+      // 3. A printer that stopped after an update: printing fails, Halo installs the newer driver from Windows Update, the recipe prints.
       async (id, pause, looking) => {
-        scene(2, "mail · inbox", "v-text");
-        $("mail").classList.remove("big");
-        at(orb, 86, 62);
-        await pause(600);
-        await show("You", "I can't read this. The writing is far too small.", { min: 2400, kind: "you", clip: "text-ask", id });
-        zoom($("mail"), 1.3);
-        onto(orb, $("mail"), "center");
-        await looking("Checking your display settings…", 1200);
-        orb.classList.remove("busy");
-        await show("Halo", "I'll make the text easier to read, everywhere on your computer. Okay?", { min: 2300, clip: "text-offer", id });
-        await show("You", "Yes, please.", { min: 1000, kind: "you", clip: "text-yes", id });
-        zoom(null);
-        $("mail").classList.add("big");
-        at(orb, 86, 62);
-        chime();
-        await show("Done", "Done. That should be much easier to read now. Just say if you'd like it changed again.", { min: 2800, clip: "text-done", id });
-      },
-      // 4. A printer that stopped after an update: Halo finds the newer driver in Windows Update and installs it.
-      async (id, pause, looking) => {
-        scene(3, "Settings", "v-driver");
+        scene(2, "Documents · Apple pie recipe", "v-driver");
+        $("docwin").classList.remove("gone"); $("settings").classList.remove("show");
+        ["pdlg", "perr", "printing"].forEach((k) => $(k).classList.remove("on"));
+        $("pbtn").classList.remove("press"); $("printing").classList.remove("done");
         $("drv-check").classList.remove("on"); $("drv-install").classList.remove("ready");
         $("drv-progress").classList.remove("on"); $("drv-bar").style.width = "0";
         $("printer").classList.remove("fixed"); $("printer-state").textContent = "Driver error · won't print";
-        at(orb, 50, 70);
-        await pause(500);
+        at(orb, 88, 72);
+        await pause(700);
+        // They try to print, and get an error.
+        $("pdlg").classList.add("on");
+        await pause(1100);
+        $("pbtn").classList.add("press");
+        await pause(350);
+        $("pdlg").classList.remove("on"); $("perr").classList.add("on");
+        await pause(1300);
         await show("You", "My printer stopped working after the last update. Can you fix it?", { min: 3000, kind: "you", clip: "driver-ask", id });
-        onto(orb, $("printer"), "center");
-        await looking("Checking your printer and its driver…", 1300);
+        zoom($("perr"), 1.35);
+        onto(orb, $("perr"), "center");
+        await looking("Reading the error and checking your printer…", 1400);
+        zoom(null);
+        await pause(300);
+        // Halo opens Windows Update's optional driver updates.
+        $("url").textContent = "Settings · Windows Update";
+        $("docwin").classList.add("gone"); $("settings").classList.add("show");
+        await pause(500);
         zoom($("drv-printer"), 1.4);
         onto(orb, $("drv-printer"), "center");
         orb.classList.remove("busy");
@@ -866,14 +971,20 @@
           await pause(110);
         }
         zoom(null);
-        line.textContent = "Printing a test page…";
+        await pause(400);
+        // Back to the recipe, and print it again.
+        $("url").textContent = "Documents · Apple pie recipe";
+        $("settings").classList.remove("show"); $("docwin").classList.remove("gone"); $("perr").classList.remove("on");
+        line.textContent = "Printing your recipe again…";
+        $("printing").classList.add("on");
         onto(orb, $("printer"), "center");
-        await pause(1200);
+        await pause(1500);
         orb.classList.remove("busy");
-        $("printer").classList.add("fixed"); $("printer-state").textContent = "Ready · test page printed";
-        at(orb, 50, 70);
+        $("printing").classList.add("done");
+        $("printer").classList.add("fixed"); $("printer-state").textContent = "Ready · printing your recipe";
+        at(orb, 88, 72);
         chime();
-        await show("Done", "Done. The new driver is installed, and I printed a test page to check. Your printer works again.", { min: 3400, clip: "driver-done", id });
+        await show("Done", "Fixed. The new driver is installed, and your recipe is printing now.", { min: 3000, clip: "driver-done", id });
       },
     ];
 
