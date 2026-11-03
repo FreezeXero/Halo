@@ -1,75 +1,94 @@
 # Halo
 
-**Something on your Mac isn't working? Press ⌃⌥⌘D, or just say what's wrong. Halo fixes it safely and shows you proof that it worked.**
+**Just say it. Halo does it.**
 
-It's built for people who aren't technical, like a parent who would otherwise call their kids for help.
+Halo is an AI that uses your computer for you. Press one key, say what's wrong the way you'd tell a grandkid, and Halo looks at your screen, fixes it, and asks before every change.
+
+It's built for people who would rather not learn computers, and for the families who usually get the phone call.
+
+**Website and interactive demos:** [halodoes.com](https://halodoes.com)
+
+Halo started as **Stride**, built in under 36 hours at Cal Hacks. It now runs on **Windows 11** and **macOS**.
 
 ## What it can do
 
-- **"My printer won't print"**: finds the stuck jobs, fixes them, then shows **Before: Paused → After: Ready**.
-- **"The sound is coming out of my AirPods"**: switches it back to the Mac's speakers.
-- **"I can't find my resume"**: finds the file and shows it in Finder.
-- **"Uninstall Zoom"**: closes Zoom and moves it to the Trash, so you can still get it back.
-- **A how-to page or IT email**: follows the steps for you and skips anything unsafe.
-- **Scams**: warns you about fake "verify you're human" pages and stops dangerous copied commands.
+- **"There's no sound"**: finds sound going to a monitor with no speakers, switches it to your headphones or speakers, unmutes, and checks it worked.
+- **"My printer stopped working"**: finds a paused printer or stuck print jobs, fixes them, and checks the printer is ready.
+- **"Get me ready for my doctor's visit"**: adds it to your calendar, fills in the check-in form for you to submit, sets up Zoom, and joins the call when it's time.
+- **"Reload the page" / "go to YouTube" / "search for..."**: runs straight away as a keyboard shortcut, with no AI call.
+- **"Look at my screen"**: Halo reads what's in front of you and helps with whatever is there.
+- **Scams**: stops fake "verify you're human" pages and tech-support pop-ups before you press anything.
 - **"Delete all my files"**: refuses, explains why and offers a safe option instead.
 
-## Tech stack
+## Safety
 
-| Technology | What it does in Halo |
-|---|---|
-| **TypeScript + Node.js 22** | The language and runtime the whole app is written in. |
-| **Electron** | Runs the desktop app: the menu bar icon, the helper bar and Halo, the red mascot. |
-| **Claude (Anthropic SDK)** | The brain. It works out what's wrong, plans the fix, reads how-to pages and writes the final "here's what I did" summary. A separate Claude call checks the work. |
-| **Factory Droid SDK** | The hands. It runs each approved command on the Mac, and only that command, behind our safety gate. It also judges whether a page is a scam. |
-| **TypeSafe Jev** *(optional)* | Picks the next button to click and finds it on the screen. Claude Haiku takes over if Jev isn't set up. |
-| **Swift + macOS APIs** | Small helper programs that talk to the Mac directly. **Accessibility** reads and clicks buttons by name, **ScreenCaptureKit** takes screenshots that leave out Halo's own windows, and **CoreAudio** switches sound outputs. |
-| **AppleScript** | Adds Calendar events and reads the address of the page open in Safari or Chrome. |
-| **Playwright** | Fills in and submits web forms (like a clinic check-in) in a separate Chrome window. |
-| **whisper.cpp** | Turns your voice into text, on your Mac. |
-| **Kokoro** | Reads Halo's answers out loud with a natural voice, on your Mac. |
-| **pdf.js** | Reads the text of PDF guides. |
-| **sharp** | Shrinks and crops screenshots before they're checked. |
-| **Zod** | Makes sure every AI answer has the right shape before our code uses it. |
-| **shell-quote** | Splits commands into parts so the safety rules can check each one. |
-| **Vitest** | Runs the test suite (295+ tests). |
+These rules live in Halo's code, not its prompt, so a website, an email or a scammer can't talk it out of them.
+
+- Every change is read back to you before it happens.
+- Halo never types passwords, never pays for anything, and never handles sign-ins or permission prompts.
+- Nothing is deleted for good: files go to the Trash or Recycle Bin.
+- Personal choices stay with you.
 
 ## How it works
 
-1. **Look:** Halo checks the Mac (and the screen, if needed) to find the problem.
-2. **Check it's safe:** our code, not the AI, rates every step. Dangerous steps are refused and risky ones ask you first.
-3. **Act:** Droid runs only the steps that passed.
-4. **Prove it:** Halo checks again and shows what changed. If it can't prove the fix worked, it tells you.
+1. **Listen:** you press the shortcut and talk. Speech is turned into text on your computer.
+2. **Decide:** simple commands run instantly. Known fixes (sound, printers, settings) use built-in routines that talk to the system directly. Everything else goes to Claude, which plans step by step.
+3. **Guard:** our code rates every step. Dangerous steps are refused and risky ones ask you first.
+4. **Act:** Halo runs only the steps that passed.
+5. **Check:** Halo looks again and tells you what changed. If it can't prove the fix worked, it says so.
 
-Everything can be undone: files go to the Trash, never deleted outright.
+## Tech stack
+
+| Part | What we use |
+|---|---|
+| **App** | Electron + TypeScript on Node.js 22 |
+| **Reasoning** | Claude Opus 5.5 (Anthropic SDK) with tool use and prompt caching |
+| **Finding buttons** | TypeSafe Jev for on-screen targets, with Claude as the fallback |
+| **Hearing** | whisper.cpp, on the device |
+| **Speaking** | Kokoro, a natural voice that runs on the device |
+| **Windows** | PowerShell and native Windows APIs (Core Audio, printers, Wi-Fi, settings) |
+| **Mac** | Swift helpers (Accessibility, ScreenCaptureKit, CoreAudio), AppleScript, and Factory Droid for approved commands |
+| **Web forms** | Playwright |
+| **Checks** | Zod for every AI answer, shell-quote for command safety |
+| **Tests** | Vitest, 650+ tests |
 
 ## Setup
 
-You need a Mac and Node.js 22 or later.
+You need Node.js 22 or later, on Windows 11 or macOS.
 
 ```bash
 npm install
-cp .env.example .env
 ```
 
-Then put your keys in `.env`:
+Copy `.env.example` to `.env` and add your `ANTHROPIC_API_KEY` from console.anthropic.com. The other keys are optional and explained in that file.
 
-- `ANTHROPIC_API_KEY`: required, from console.anthropic.com
-- `FACTORY_API_KEY`: for Droid, from app.factory.ai. Without it, Halo runs the steps itself.
-- `TYPESAFE_API_KEY`: optional, for Jev
+Voice (optional, recommended):
 
-To use Droid, also install it with `brew install --cask droid`.
+```bash
+npm run voice:setup
+```
+
+Then the natural voice, on Windows:
+
+```bash
+npm run voice:heart:setup:win
+```
+
+or on a Mac:
+
+```bash
+npm run voice:heart:setup
+```
 
 ## Run
 
-Open two terminal windows:
-
 ```bash
-npm run demo:pages   # demo pages at http://localhost:4321
-npm start            # the app (🛡️ appears in the menu bar)
+npm start
 ```
 
-The first time it runs, macOS asks for **Screen Recording**, **Accessibility** and **Automation** permissions. Allow them, then restart the app.
+Press **Ctrl+Alt+D** on Windows or **Ctrl+Option+Cmd+D** on a Mac, then say what you need. On a Mac, allow **Screen Recording**, **Accessibility** and **Automation** the first time, then restart the app.
+
+To try the sound fix on Windows, `npm run demo:break-sound` moves your sound to a silent output and `npm run demo:reset-sound` puts it back.
 
 ## Test
 
@@ -79,4 +98,4 @@ npm test
 
 ## Learn more
 
-[docs/DETAILS.md](docs/DETAILS.md) explains the safety rules, how Droid is used, the demo script and the benchmarks.
+[docs/DETAILS.md](docs/DETAILS.md) covers the safety rules, the Windows layer, the demo script and the benchmarks.
