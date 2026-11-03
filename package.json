@@ -12,6 +12,8 @@
     "demo:pages": "tsx src/cli/serve-demo.ts",
     "demo:break-sound": "tsx src/cli/demo-sound.ts break",
     "demo:reset-sound": "tsx src/cli/demo-sound.ts reset",
+    "site:voices": "node --env-file=.env.local scripts/site-voice-elevenlabs.mjs",
+    "site:voices:samples": "node --env-file=.env.local scripts/site-voice-elevenlabs.mjs --samples",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "droid:check": "tsx src/cli/droid-check.ts",
@@ -35,6 +37,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.75.0",
     "@types/node": "^26.6.5",
     "@types/shell-quote": "^1.7.5",
     "electron": "^45.0.0",
