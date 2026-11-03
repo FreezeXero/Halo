@@ -93,6 +93,11 @@
     @keyframes spin { to { --a: 360deg; } }
     @keyframes breathe { 50% { transform: scale(1.12); opacity: 0.7; } }
     .orb.talk::after { animation-duration: 0.7s; }
+    .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
+    .play[hidden] { display: none; }
+    .play:hover { transform: translate(-50%, -50%) scale(1.03); background: rgba(20, 20, 22, 0.9); }
+    .play-icon { width: 24px; height: 24px; border-radius: 50%; background: var(--gold); position: relative; }
+    .play-icon::after { content: ""; position: absolute; left: 9px; top: 7px; border-left: 8px solid #1a1405; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
     .sound-btn { margin-left: auto; height: 22px; padding: 0 10px; border-radius: 4px; border: 1px solid var(--hair-2); background: #161618; color: var(--ink-2); font: 11px var(--mono); letter-spacing: 0.05em; cursor: pointer; }
     .sound-btn:hover { color: var(--ink); }
     .sound-btn.on { color: var(--gold); border-color: rgba(255, 201, 77, 0.45); }
@@ -149,6 +154,19 @@
     .closing { padding: 160px 0 120px; border-top: 1px solid var(--hair); }
     .closing h2 { font-size: clamp(48px, 7vw, 96px); line-height: 0.98; max-width: 900px; }
     .closing .actions { margin-top: 40px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .signup { margin-top: 44px; max-width: 520px; }
+    .signup label { display: block; margin-bottom: 12px; }
+    .signup-row { display: flex; gap: 8px; }
+    .signup input[type="email"] { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: var(--r); border: 1px solid var(--hair-2); background: var(--raise); color: var(--ink); font: 15px var(--sans); outline: none; transition: border-color 0.15s; }
+    .signup input[type="email"]:focus { border-color: rgba(255, 201, 77, 0.6); }
+    .signup .btn { height: 44px; border: 0; cursor: pointer; font-family: var(--sans); }
+    .signup .btn:disabled { opacity: 0.6; cursor: default; }
+    .signup-note { margin: 12px 0 0; font-size: 14px; color: var(--ink-3); }
+    .signup-note.ok { color: #6fdba0; }
+    .signup-note.bad { color: #ff8a7a; }
+    .trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .closing .actions { margin-top: 28px; }
+    @media (max-width: 520px) { .signup-row { flex-direction: column; } }
     footer { border-top: 1px solid var(--hair); padding: 28px 0; }
     footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 
@@ -223,6 +241,7 @@
             </div>
           </div>
         </div>
+        <button class="play" id="play" type="button"><span class="play-icon"></span>Play with sound</button>
         <div class="target" id="target"></div>
         <div class="orb" id="orb"></div>
         <div class="bar">
@@ -282,8 +301,8 @@
       <div class="sec-head reveal">
         <div class="mono">03 · Safety</div>
         <div>
-          <h2>Careful by design. <em>Enforced in code.</em></h2>
-          <p>Letting software use your computer takes trust. These rules live in Halo's code, so the AI can't talk its way around them.</p>
+          <h2>It asks first. <em>Every time.</em></h2>
+          <p>Letting software use your computer takes trust. So Halo has hard limits it can't cross, no matter what a website, an email or anyone else tells it.</p>
         </div>
       </div>
       <div class="rules">
@@ -301,9 +320,17 @@
     <div class="wrap">
       <div class="mono reveal">Private beta · Mac and Windows</div>
       <h2 class="reveal">Help, the moment<br>you <em>ask for it.</em></h2>
+      <form class="signup reveal" id="signup" novalidate>
+        <label class="mono" for="email">Get early access, for you or someone you help</label>
+        <div class="signup-row">
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="you@email.com" required>
+          <button class="btn btn-light" type="submit">Request access <span class="arrow">→</span></button>
+        </div>
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="trap" aria-hidden="true">
+        <p class="signup-note" id="signup-note" aria-live="polite">One email when there's a spot for you. Nothing else.</p>
+      </form>
       <div class="actions reveal">
-        <a class="btn btn-light" href="#" id="waitlist">Request access <span class="arrow">→</span></a>
-        <a class="btn btn-line" href="https://github.com/FreezeXero/Halo">GitHub</a>
+        <a class="btn btn-line" href="https://github.com/FreezeXero/Halo">View on GitHub</a>
       </div>
     </div>
   </section>
@@ -356,17 +383,26 @@
         });
       } catch {}
     }
-    $("sound").addEventListener("click", () => {
-      soundOn = !soundOn;
-      $("sound").classList.toggle("on", soundOn);
-      $("sound").textContent = soundOn ? "SOUND ON" : "TURN ON SOUND";
-      if (!soundOn && playing) playing.pause();
-    });
+    // Each run of the demo has a number; starting a new run (turning sound on) stops the old one where it is.
+    let run = 0;
+    const STOP = Symbol("stop");
+    const check = (id) => { if (id !== run) throw STOP; };
+    function setSound(on) {
+      soundOn = on;
+      $("sound").classList.toggle("on", on);
+      $("sound").textContent = on ? "SOUND ON" : "TURN ON SOUND";
+      $("play").hidden = true;
+      if (playing) playing.pause();
+      if (on) start(); // from the top, so the voice matches what's on screen
+    }
+    $("sound").addEventListener("click", () => setSound(!soundOn));
+    $("play").addEventListener("click", () => setSound(true));
 
     // Shows a line in the bar, plays its recording (when sound is on), and waits at least `min` ms.
-    async function show(who, text, { min = 1800, kind = "halo", clip } = {}) {
+    async function show(who, text, { min = 1800, kind = "halo", clip, id = run } = {}) {
       line.style.opacity = 0;
       await wait(200);
+      check(id);
       eyebrow.textContent = who;
       line.innerHTML = kind === "you" ? `<span class="you">"${text}"</span>` : text;
       line.style.opacity = 1;
@@ -376,38 +412,65 @@
       await Promise.all([speak(clip), wait(min)]);
       bar.classList.remove("talking");
       orb.classList.remove("talk");
+      check(id);
     }
 
-    async function loop() {
+    async function loop(id) {
+      const pause = async (ms) => { await wait(ms); check(id); };
       while (true) {
         at(orb, 50, 62); orb.classList.remove("busy"); target.classList.remove("on");
         $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
         $("flag").style.opacity = 1; $("wave").style.opacity = 0;
-        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you", clip: "ask" });
+        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you", clip: "ask", id });
         orb.classList.add("busy"); at(orb, 30, 40);
         eyebrow.textContent = "Halo is looking"; line.textContent = "Checking your call and your sound…";
-        await wait(1500);
+        await pause(1500);
         onto(orb, $("output"), "center"); $("output").classList.add("lit");
-        await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found" });
+        await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found", id });
         orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
-        await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000, clip: "offer" });
-        await show("You", "Yes.", { min: 900, kind: "you", clip: "yes" });
+        await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000, clip: "offer", id });
+        await show("You", "Yes.", { min: 900, kind: "you", clip: "yes", id });
         target.classList.remove("on"); $("o1").classList.remove("sel"); $("o2").classList.add("sel");
         $("flag").style.opacity = 0; $("wave").style.opacity = 1;
         at(orb, 50, 62);
         chime();
-        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3400, clip: "done" });
-        await wait(800);
+        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3400, clip: "done", id });
+        await pause(800);
       }
     }
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); show("Halo", "Switched to your laptop speakers. You should hear Sam now."); }
-    else loop();
+    function start() {
+      const id = ++run;
+      loop(id).catch((e) => { if (e !== STOP) console.error(e); });
+    }
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); line.textContent = "Switched to your laptop speakers. You should hear Sam now."; }
+    else start();
 
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.12 });
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
-    // No sign-up form yet: point this at a real form link once there is one.
-    $("waitlist").addEventListener("click", (e) => { e.preventDefault(); alert("Access requests open soon. Thanks for your interest in Halo."); });
+    // Sign-ups go to Formspree (formspree.io), which emails each one. Paste the form's ID (the part after /f/) here.
+    const FORMSPREE_ID = "";
+    $("signup").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget, note = $("signup-note"), email = $("email").value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { note.textContent = "That email doesn't look right. Check it and try again."; note.className = "signup-note bad"; return; }
+      if (!FORMSPREE_ID) { note.textContent = "Sign-ups open in a few days. Check back soon."; note.className = "signup-note"; return; }
+      const button = form.querySelector("button");
+      button.disabled = true;
+      note.textContent = "Sending…"; note.className = "signup-note";
+      try {
+        const r = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, { method: "POST", headers: { Accept: "application/json" }, body: new FormData(form) });
+        if (!r.ok) throw new Error(String(r.status));
+        form.reset();
+        note.textContent = "You're on the list. We'll email you when there's a spot.";
+        note.className = "signup-note ok";
+      } catch {
+        note.textContent = "That didn't go through. Try again in a minute.";
+        note.className = "signup-note bad";
+      } finally {
+        button.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
