@@ -449,7 +449,7 @@
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
 
     // Sign-ups go to Formspree (formspree.io), which emails each one. Paste the form's ID (the part after /f/) here.
-    const FORMSPREE_ID = "";
+    const FORMSPREE_ID = "mzeekoan";
     $("signup").addEventListener("submit", async (e) => {
       e.preventDefault();
       const form = e.currentTarget, note = $("signup-note"), email = $("email").value.trim();
