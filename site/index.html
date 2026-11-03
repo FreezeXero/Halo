@@ -133,6 +133,14 @@
     .hint { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; padding: 12px 20px 12px 14px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.4); background: rgba(10, 10, 11, 0.85); font-size: 15px; color: var(--ink); white-space: nowrap; box-shadow: 0 0 40px -8px rgba(255, 201, 77, 0.4); transition: opacity 0.3s; pointer-events: none; }
     .hint.off { opacity: 0; }
     @media (max-width: 880px) { .pick-row { grid-template-columns: 1fr; } .hint { white-space: normal; text-align: center; max-width: 80%; } }
+    .screen .chrome { position: relative; z-index: 5; background: #0d0d0f; }
+    .cam { position: absolute; inset: 0; transform-origin: 50% 50%; transition: transform 1.1s cubic-bezier(.2,.75,.2,1); }
+    .cursor { position: absolute; width: 22px; height: 22px; margin: -2px 0 0 -4px; opacity: 0; z-index: 3; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); transition: left 0.9s cubic-bezier(.3,.8,.25,1), top 0.9s cubic-bezier(.3,.8,.25,1), opacity 0.3s, transform 0.12s; }
+    .cursor.on { opacity: 1; }
+    .cursor.press { transform: scale(0.82); }
+    .ripple { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid var(--gold); z-index: 3; pointer-events: none; animation: ripple 0.6s ease-out forwards; }
+    @keyframes ripple { to { transform: scale(5); opacity: 0; } }
+    .screen.live { box-shadow: 0 0 0 1px rgba(255, 201, 77, 0.18), 0 30px 90px -20px rgba(255, 201, 77, 0.18); transition: box-shadow 0.6s; }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -274,6 +282,7 @@
       </div>
       <div class="screen reveal" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
         <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
+        <div class="cam" id="cam">
         <div class="call view on" id="v-call">
           <div class="tile">
             <div class="avatar">S</div>
@@ -309,9 +318,11 @@
             <div class="photos"><i></i><i></i><i></i></div>
           </div>
         </div>
-        <div class="hint" id="hint"><span class="play-icon"></span>Pick a problem above to watch Halo fix it</div>
         <div class="target" id="target"></div>
         <div class="orb" id="orb"></div>
+        <svg class="cursor" id="cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.5v17.2l4.7-4.4 3 6.9 3-1.3-3-6.8h6.5z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="hint" id="hint"><span class="play-icon"></span>Pick a problem above to watch Halo fix it</div>
         <div class="bar">
           <div class="bar-top"><div class="eyebrow" id="eyebrow">Halo is listening</div><div class="voice" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></div></div>
           <div class="line" id="line"></div>
@@ -412,8 +423,12 @@
     const orb = $("orb"), target = $("target"), line = $("line"), eyebrow = $("eyebrow");
     const at = (el, x, y) => { el.style.left = x + "%"; el.style.top = y + "%"; };
     // Puts el on the left edge (or centre) of another element in the screen, measured, so it lines up at any size.
+    // Measured with the camera zoomed out (and put back after), since the moving parts zoom along with it.
     const onto = (el, of, edge = "left") => {
+      const cam = document.getElementById("cam"), prev = cam.style.transform;
+      cam.style.transition = "none"; cam.style.transform = "";
       const s = document.querySelector(".screen").getBoundingClientRect(), r = of.getBoundingClientRect();
+      cam.style.transform = prev; void cam.offsetWidth; cam.style.transition = "";
       const x = (edge === "left" ? r.left + 14 : r.left + r.width / 2) - s.left, y = r.top + r.height / 2 - s.top;
       at(el, (x / s.width) * 100, (y / s.height) * 100);
     };
@@ -481,6 +496,35 @@
       check(id);
     }
 
+    // The camera: zooms in on an element (measured unzoomed, so positions stay right), or back out with null.
+    const cam = $("cam");
+    function zoom(el, scale = 1.35) {
+      if (!el) { cam.style.transform = ""; return; }
+      const prev = cam.style.transform;
+      cam.style.transition = "none"; cam.style.transform = "";
+      const s = document.querySelector(".screen").getBoundingClientRect(), r = el.getBoundingClientRect();
+      cam.style.transform = prev; void cam.offsetWidth; cam.style.transition = "";
+      const x = ((r.left + r.width / 2 - s.left) / s.width) * 100, y = ((r.top + r.height / 2 - s.top) / s.height) * 100;
+      cam.style.transformOrigin = `${x}% ${y}%`;
+      cam.style.transform = `scale(${scale})`;
+    }
+    // Halo's cursor glides to an element and clicks it, with a ripple where it clicked.
+    async function click(el, id) {
+      const c = $("cursor");
+      zoom(null);
+      await wait(50);
+      onto(c, el);
+      c.classList.add("on");
+      await wait(950); check(id);
+      c.classList.add("press");
+      const rip = document.createElement("div");
+      rip.className = "ripple"; rip.style.left = c.style.left; rip.style.top = c.style.top;
+      cam.appendChild(rip);
+      setTimeout(() => rip.remove(), 700);
+      await wait(140);
+      c.classList.remove("press");
+    }
+
     // Which scene is on screen: the address bar, the view, and the picked card.
     function scene(n, url, view) {
       document.querySelectorAll(".pick-card").forEach((el, i) => el.classList.toggle("on", i === n));
@@ -488,6 +532,8 @@
       document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === view));
       target.classList.remove("on"); orb.classList.remove("busy");
       bar.classList.remove("talking", "you");
+      $("cursor").classList.remove("on");
+      zoom(null);
     }
 
     const SCENES = [
@@ -503,11 +549,17 @@
         onto(orb, $("output"), "center"); $("output").classList.add("lit");
         await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found", id });
         orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
+        zoom($("output"), 1.5);
         await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000, clip: "offer", id });
         await show("You", "Yes.", { min: 900, kind: "you", clip: "yes", id });
-        target.classList.remove("on"); $("o1").classList.remove("sel"); $("o2").classList.add("sel");
+        target.classList.remove("on");
+        await click($("o2"), id);
+        $("o1").classList.remove("sel"); $("o2").classList.add("sel");
         $("flag").style.opacity = 0; $("wave").style.opacity = 1;
+        await pause(500);
+        $("cursor").classList.remove("on");
         at(orb, 50, 62);
+        zoom($("flag").parentElement, 1.2);
         chime();
         await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 2600, clip: "done", id });
       },
@@ -521,7 +573,10 @@
         onto(orb, $("phone"), "center");
         await looking("Reading the page…", 1200);
         orb.classList.remove("busy"); $("phone").classList.add("flagged");
+        zoom($("phone"), 1.45);
         await show("Stopped a scam", "Don't call. This is a scam. Real warnings never ask you to phone a number.", { min: 3000, clip: "scam-warn", id });
+        zoom(null);
+        await pause(500);
         $("scam").classList.add("gone"); $("newtab").classList.add("on");
         $("url").textContent = "New tab";
         at(orb, 50, 62);
@@ -535,11 +590,13 @@
         at(orb, 86, 62);
         await pause(600);
         await show("You", "I can't read this. The words are too small.", { min: 2400, kind: "you", clip: "text-ask", id });
+        zoom($("mail"), 1.3);
         onto(orb, $("mail"), "center");
         await looking("Checking your display settings…", 1200);
         orb.classList.remove("busy");
         await show("Halo", "I'll make the text bigger everywhere on your computer. Okay?", { min: 2300, clip: "text-offer", id });
         await show("You", "Yes, please.", { min: 1000, kind: "you", clip: "text-yes", id });
+        zoom(null);
         $("mail").classList.add("big");
         at(orb, 86, 62);
         chime();
@@ -551,6 +608,7 @@
       const id = ++run;
       if (playing) playing.pause();
       $("hint").classList.add("off");
+      document.querySelector(".screen").classList.add("live");
       const pause = async (ms) => { await wait(ms); check(id); };
       const looking = async (text, ms) => { orb.classList.add("busy"); eyebrow.textContent = "Halo is looking"; line.textContent = text; await pause(ms); };
       try {
