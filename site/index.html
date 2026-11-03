@@ -120,6 +120,19 @@
     .photos i { flex: 1; height: 4.6em; border-radius: 4px; background: linear-gradient(135deg, #9db8d8, #5b7ea8); }
     .photos i:nth-child(2) { background: linear-gradient(135deg, #b9d39b, #6f9a4d); }
     .photos i:nth-child(3) { background: linear-gradient(135deg, #f2c48d, #d9894a); }
+    .pick { margin-top: 72px; }
+    .pick-label { margin-bottom: 12px; }
+    .pick-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .pick-card { text-align: left; padding: 16px 18px; border-radius: 8px; border: 1px solid var(--hair-2); background: var(--raise); color: var(--ink); font: inherit; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s; }
+    .pick-card:hover { border-color: rgba(255, 201, 77, 0.45); transform: translateY(-1px); }
+    .pick-card.on { border-color: var(--gold); background: rgba(255, 201, 77, 0.07); }
+    .pick-card span { display: block; margin-bottom: 6px; }
+    .pick-card.on span { color: var(--gold); }
+    .pick-card b { font: 400 22px/1.15 var(--serif); }
+    .pick + .screen { margin-top: 14px; }
+    .hint { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; padding: 12px 20px 12px 14px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.4); background: rgba(10, 10, 11, 0.85); font-size: 15px; color: var(--ink); white-space: nowrap; box-shadow: 0 0 40px -8px rgba(255, 201, 77, 0.4); transition: opacity 0.3s; pointer-events: none; }
+    .hint.off { opacity: 0; }
+    @media (max-width: 880px) { .pick-row { grid-template-columns: 1fr; } .hint { white-space: normal; text-align: center; max-width: 80%; } }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -251,8 +264,13 @@
         </div>
       </div>
 
-      <div class="scenes mono reveal" id="scenes" aria-hidden="true">
-        <span class="on">01 · Sound</span><span>02 · Scam</span><span>03 · Text size</span>
+      <div class="pick reveal" id="pick" role="group" aria-label="Pick a problem to see Halo fix it">
+        <div class="mono pick-label">Pick a problem. Halo fixes it.</div>
+        <div class="pick-row">
+          <button type="button" class="pick-card" data-scene="0"><span class="mono">01</span><b>"I can't hear my call"</b></button>
+          <button type="button" class="pick-card" data-scene="1"><span class="mono">02</span><b>"A pop-up says I have a virus"</b></button>
+          <button type="button" class="pick-card" data-scene="2"><span class="mono">03</span><b>"The words are too small"</b></button>
+        </div>
       </div>
       <div class="screen reveal" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
         <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
@@ -291,7 +309,7 @@
             <div class="photos"><i></i><i></i><i></i></div>
           </div>
         </div>
-        <button class="play" id="play" type="button"><span class="play-icon"></span>Play with sound</button>
+        <div class="hint" id="hint"><span class="play-icon"></span>Pick a problem above to watch Halo fix it</div>
         <div class="target" id="target"></div>
         <div class="orb" id="orb"></div>
         <div class="bar">
@@ -299,7 +317,7 @@
           <div class="line" id="line"></div>
         </div>
       </div>
-      <div class="caption mono"><span>Animated walkthroughs of real Halo tasks</span><span>Turn on sound to hear them</span></div>
+      <div class="caption mono"><span>Animated walkthroughs of real Halo tasks</span><span>Sound plays when you pick one</span></div>
     </div>
   </header>
 
@@ -433,20 +451,18 @@
         });
       } catch {}
     }
-    // Each run of the demo has a number; starting a new run (turning sound on) stops the old one where it is.
+    // Each run of the demo has a number; picking another scene stops the old one where it is.
     let run = 0;
     const STOP = Symbol("stop");
     const check = (id) => { if (id !== run) throw STOP; };
     function setSound(on) {
       soundOn = on;
       $("sound").classList.toggle("on", on);
-      $("sound").textContent = on ? "SOUND ON" : "TURN ON SOUND";
-      $("play").hidden = true;
-      if (playing) playing.pause();
-      if (on) start(); // from the top, so the voice matches what's on screen
+      $("sound").textContent = on ? "SOUND ON" : "SOUND OFF";
+      if (!on && playing) playing.pause();
     }
     $("sound").addEventListener("click", () => setSound(!soundOn));
-    $("play").addEventListener("click", () => setSound(true));
+    $("sound").textContent = "SOUND OFF";
 
     // Shows a line in the bar, plays its recording (when sound is on), and waits at least `min` ms.
     async function show(who, text, { min = 1800, kind = "halo", clip, id = run } = {}) {
@@ -465,26 +481,25 @@
       check(id);
     }
 
-    // Which scene is on screen: the address bar, the view, and the step above the screen.
+    // Which scene is on screen: the address bar, the view, and the picked card.
     function scene(n, url, view) {
-      document.querySelectorAll("#scenes span").forEach((el, i) => el.classList.toggle("on", i === n));
+      document.querySelectorAll(".pick-card").forEach((el, i) => el.classList.toggle("on", i === n));
       $("url").textContent = url;
       document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === view));
       target.classList.remove("on"); orb.classList.remove("busy");
+      bar.classList.remove("talking", "you");
     }
 
-    async function loop(id) {
-      const pause = async (ms) => { await wait(ms); check(id); };
-      const looking = async (text, ms) => { orb.classList.add("busy"); eyebrow.textContent = "Halo is looking"; line.textContent = text; await pause(ms); };
-      while (true) {
-        // 1. Sound: the call is silent because the sound goes to a monitor.
+    const SCENES = [
+      // 1. Sound: the call is silent because the sound goes to a monitor.
+      async (id, pause, looking) => {
         scene(0, "meet · family call", "v-call");
         at(orb, 50, 62);
         $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
         $("flag").style.opacity = 1; $("wave").style.opacity = 0;
-        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you", clip: "ask", id });
+        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2400, kind: "you", clip: "ask", id });
         at(orb, 30, 40);
-        await looking("Checking your call and your sound…", 1400);
+        await looking("Checking your call and your sound…", 1300);
         onto(orb, $("output"), "center"); $("output").classList.add("lit");
         await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found", id });
         orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
@@ -494,50 +509,65 @@
         $("flag").style.opacity = 0; $("wave").style.opacity = 1;
         at(orb, 50, 62);
         chime();
-        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3000, clip: "done", id });
-        await pause(700);
-
-        // 2. Scam: a fake virus warning with a phone number.
+        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 2600, clip: "done", id });
+      },
+      // 2. Scam: a fake virus warning with a phone number.
+      async (id, pause, looking) => {
         scene(1, "pc-security-center-alert.com", "v-scam");
         $("scam").classList.remove("gone"); $("newtab").classList.remove("on"); $("phone").classList.remove("flagged");
         at(orb, 86, 62);
-        await pause(900);
-        await show("You", "This says my computer has a virus, and I have to call them. Should I?", { min: 3200, kind: "you", clip: "scam-ask", id });
+        await pause(600);
+        await show("You", "This says my computer has a virus, and I have to call them. Should I?", { min: 3000, kind: "you", clip: "scam-ask", id });
         onto(orb, $("phone"), "center");
         await looking("Reading the page…", 1200);
         orb.classList.remove("busy"); $("phone").classList.add("flagged");
-        await show("Stopped a scam", "Don't call. This is a scam. Real warnings never ask you to phone a number.", { min: 3200, clip: "scam-warn", id });
+        await show("Stopped a scam", "Don't call. This is a scam. Real warnings never ask you to phone a number.", { min: 3000, clip: "scam-warn", id });
         $("scam").classList.add("gone"); $("newtab").classList.add("on");
         $("url").textContent = "New tab";
         at(orb, 50, 62);
         chime();
-        await show("Done", "I closed that page. Your computer is fine, and nothing was installed.", { min: 3000, clip: "scam-done", id });
-        await pause(700);
-
-        // 3. Text size: the words are too small to read.
+        await show("Done", "I closed that page. Your computer is fine, and nothing was installed.", { min: 2600, clip: "scam-done", id });
+      },
+      // 3. Text size: the words are too small to read.
+      async (id, pause, looking) => {
         scene(2, "mail · inbox", "v-text");
         $("mail").classList.remove("big");
         at(orb, 86, 62);
-        await pause(900);
-        await show("You", "I can't read this. The words are too small.", { min: 2600, kind: "you", clip: "text-ask", id });
+        await pause(600);
+        await show("You", "I can't read this. The words are too small.", { min: 2400, kind: "you", clip: "text-ask", id });
         onto(orb, $("mail"), "center");
         await looking("Checking your display settings…", 1200);
         orb.classList.remove("busy");
-        await show("Halo", "I'll make the text bigger everywhere on your computer. Okay?", { min: 2400, clip: "text-offer", id });
+        await show("Halo", "I'll make the text bigger everywhere on your computer. Okay?", { min: 2300, clip: "text-offer", id });
         await show("You", "Yes, please.", { min: 1000, kind: "you", clip: "text-yes", id });
         $("mail").classList.add("big");
         at(orb, 86, 62);
         chime();
-        await show("Done", "Done. Everything is bigger now. Tell me if you want it even larger.", { min: 3400, clip: "text-done", id });
-        await pause(900);
+        await show("Done", "Done. Everything is bigger now. Tell me if you want it even larger.", { min: 2800, clip: "text-done", id });
+      },
+    ];
+
+    async function play(n) {
+      const id = ++run;
+      if (playing) playing.pause();
+      $("hint").classList.add("off");
+      const pause = async (ms) => { await wait(ms); check(id); };
+      const looking = async (text, ms) => { orb.classList.add("busy"); eyebrow.textContent = "Halo is looking"; line.textContent = text; await pause(ms); };
+      try {
+        await SCENES[n](id, pause, looking);
+      } catch (e) {
+        if (e !== STOP) console.error(e);
       }
     }
-    function start() {
-      const id = ++run;
-      loop(id).catch((e) => { if (e !== STOP) console.error(e); });
-    }
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); eyebrow.textContent = "Done"; line.textContent = "Switched to your laptop speakers. You should hear Sam now."; }
-    else start();
+    document.querySelectorAll(".pick-card").forEach((card) => card.addEventListener("click", () => {
+      if (!soundOn) setSound(true); // they clicked, so the browser allows sound now
+      play(Number(card.dataset.scene));
+    }));
+
+    // Before they pick: the call, still, with Halo's one-line pitch in the bar.
+    scene(-1, "meet · family call", "v-call");
+    at(orb, 50, 62);
+    eyebrow.textContent = "Halo"; line.textContent = "Press one key and say what's wrong. I'll take care of it.";
 
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.12 });
     document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
