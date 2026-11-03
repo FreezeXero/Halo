@@ -92,6 +92,34 @@
     @property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
     @keyframes spin { to { --a: 360deg; } }
     @keyframes breathe { 50% { transform: scale(1.12); opacity: 0.7; } }
+    .scenes { margin-top: 72px; display: flex; gap: 22px; flex-wrap: wrap; }
+    .scenes span { padding-bottom: 6px; border-bottom: 1px solid transparent; transition: color 0.3s, border-color 0.3s; }
+    .scenes span.on { color: var(--ink); border-color: var(--gold); }
+    .scenes + .screen { margin-top: 14px; }
+    .view { position: absolute; inset: 52px 18px 18px; opacity: 0; visibility: hidden; transition: opacity 0.5s, visibility 0.5s; }
+    .view.on { opacity: 1; visibility: visible; }
+    .page { border-radius: 6px; background: #141416; display: flex; justify-content: center; align-items: flex-start; padding-top: 26px; overflow: hidden; }
+    .scam { width: min(430px, 82%); background: #fff; color: #1a1a1a; border: 3px solid #d93025; border-radius: 8px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transition: opacity 0.4s, transform 0.4s; }
+    .scam.gone { opacity: 0; transform: scale(0.96); }
+    .scam-head { background: #d93025; color: #fff; font: 700 13px var(--sans); letter-spacing: 0.06em; padding: 8px 14px; animation: flash 1s steps(2) infinite; }
+    @keyframes flash { 50% { background: #b3261e; } }
+    .scam-body { padding: 14px 18px 18px; font-size: 13px; }
+    .scam-body h4 { margin: 0 0 6px; font: 700 17px var(--sans); color: #b3261e; }
+    .scam-body p { margin: 0 0 12px; color: #333; }
+    .scam-phone { font: 700 18px var(--sans); color: #111; margin-bottom: 10px; transition: background 0.3s; padding: 2px 4px; border-radius: 4px; }
+    .scam-phone.flagged { background: rgba(255, 201, 77, 0.35); text-decoration: line-through; text-decoration-color: #d93025; }
+    .scam-btn { display: inline-block; background: #1a73e8; color: #fff; font-weight: 600; font-size: 12px; padding: 7px 12px; border-radius: 4px; }
+    .newtab { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 0.5s 0.2s; }
+    .newtab.on { opacity: 1; }
+    .mail { width: min(560px, 86%); background: #f4f3ef; color: #222; border-radius: 8px; padding: 16px 20px; font-size: 10.5px; line-height: 1.5; box-shadow: 0 20px 50px rgba(0,0,0,0.45); transition: font-size 0.7s cubic-bezier(.2,.8,.2,1); }
+    .mail.big { font-size: 17px; }
+    .mail-from { color: #555; margin-bottom: 8px; }
+    .mail-from b { color: #111; }
+    .mail p { margin: 0 0 12px; }
+    .photos { display: flex; gap: 8px; }
+    .photos i { flex: 1; height: 4.6em; border-radius: 4px; background: linear-gradient(135deg, #9db8d8, #5b7ea8); }
+    .photos i:nth-child(2) { background: linear-gradient(135deg, #b9d39b, #6f9a4d); }
+    .photos i:nth-child(3) { background: linear-gradient(135deg, #f2c48d, #d9894a); }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -223,9 +251,12 @@
         </div>
       </div>
 
-      <div class="screen reveal" aria-label="Animated example: Halo fixes the sound on a video call">
-        <div class="chrome"><i></i><i></i><i></i><div class="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
-        <div class="call">
+      <div class="scenes mono reveal" id="scenes" aria-hidden="true">
+        <span class="on">01 · Sound</span><span>02 · Scam</span><span>03 · Text size</span>
+      </div>
+      <div class="screen reveal" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
+        <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
+        <div class="call view on" id="v-call">
           <div class="tile">
             <div class="avatar">S</div>
             <div class="name">Sam</div>
@@ -241,6 +272,25 @@
             </div>
           </div>
         </div>
+        <div class="view page" id="v-scam">
+          <div class="scam" id="scam">
+            <div class="scam-head">&#9888; SECURITY ALERT</div>
+            <div class="scam-body">
+              <h4>Your computer is infected with 5 viruses!</h4>
+              <p>Do not restart your computer. Call PC Security Center now so a technician can remove them.</p>
+              <div class="scam-phone" id="phone">Call now: 1-888-555-0199</div>
+              <div class="scam-btn">Download Remote Support</div>
+            </div>
+          </div>
+          <div class="newtab" id="newtab"><span class="mono">New tab</span></div>
+        </div>
+        <div class="view page" id="v-text">
+          <div class="mail" id="mail">
+            <div class="mail-from"><b>Sam</b> &middot; Photos from Saturday</div>
+            <p>Hi Grandpa! Here are the photos from the game on Saturday. You were right about the weather. Can't wait to see you next week!</p>
+            <div class="photos"><i></i><i></i><i></i></div>
+          </div>
+        </div>
         <button class="play" id="play" type="button"><span class="play-icon"></span>Play with sound</button>
         <div class="target" id="target"></div>
         <div class="orb" id="orb"></div>
@@ -249,7 +299,7 @@
           <div class="line" id="line"></div>
         </div>
       </div>
-      <div class="caption mono"><span>An animated walkthrough of a real Halo fix</span><span>Turn on sound to hear it</span></div>
+      <div class="caption mono"><span>Animated walkthroughs of real Halo tasks</span><span>Turn on sound to hear them</span></div>
     </div>
   </header>
 
@@ -357,7 +407,7 @@
     let audio = null;
     // The lines were recorded with Halo's own voice (scripts/site-voice.py), so the page sounds like the app.
     const clips = {};
-    for (const k of ["ask", "found", "offer", "yes", "done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
+    for (const k of ["ask", "found", "offer", "yes", "done", "scam-ask", "scam-warn", "scam-done", "text-ask", "text-offer", "text-yes", "text-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
     let playing = null;
     function speak(key) {
       const clip = clips[key];
@@ -415,16 +465,26 @@
       check(id);
     }
 
+    // Which scene is on screen: the address bar, the view, and the step above the screen.
+    function scene(n, url, view) {
+      document.querySelectorAll("#scenes span").forEach((el, i) => el.classList.toggle("on", i === n));
+      $("url").textContent = url;
+      document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v.id === view));
+      target.classList.remove("on"); orb.classList.remove("busy");
+    }
+
     async function loop(id) {
       const pause = async (ms) => { await wait(ms); check(id); };
+      const looking = async (text, ms) => { orb.classList.add("busy"); eyebrow.textContent = "Halo is looking"; line.textContent = text; await pause(ms); };
       while (true) {
-        at(orb, 50, 62); orb.classList.remove("busy"); target.classList.remove("on");
+        // 1. Sound: the call is silent because the sound goes to a monitor.
+        scene(0, "meet · family call", "v-call");
+        at(orb, 50, 62);
         $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
         $("flag").style.opacity = 1; $("wave").style.opacity = 0;
         await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2600, kind: "you", clip: "ask", id });
-        orb.classList.add("busy"); at(orb, 30, 40);
-        eyebrow.textContent = "Halo is looking"; line.textContent = "Checking your call and your sound…";
-        await pause(1500);
+        at(orb, 30, 40);
+        await looking("Checking your call and your sound…", 1400);
         onto(orb, $("output"), "center"); $("output").classList.add("lit");
         await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found", id });
         orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
@@ -434,15 +494,49 @@
         $("flag").style.opacity = 0; $("wave").style.opacity = 1;
         at(orb, 50, 62);
         chime();
-        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3400, clip: "done", id });
-        await pause(800);
+        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 3000, clip: "done", id });
+        await pause(700);
+
+        // 2. Scam: a fake virus warning with a phone number.
+        scene(1, "pc-security-center-alert.com", "v-scam");
+        $("scam").classList.remove("gone"); $("newtab").classList.remove("on"); $("phone").classList.remove("flagged");
+        at(orb, 86, 62);
+        await pause(900);
+        await show("You", "This says my computer has a virus, and I have to call them. Should I?", { min: 3200, kind: "you", clip: "scam-ask", id });
+        onto(orb, $("phone"), "center");
+        await looking("Reading the page…", 1200);
+        orb.classList.remove("busy"); $("phone").classList.add("flagged");
+        await show("Stopped a scam", "Don't call. This is a scam. Real warnings never ask you to phone a number.", { min: 3200, clip: "scam-warn", id });
+        $("scam").classList.add("gone"); $("newtab").classList.add("on");
+        $("url").textContent = "New tab";
+        at(orb, 50, 62);
+        chime();
+        await show("Done", "I closed that page. Your computer is fine, and nothing was installed.", { min: 3000, clip: "scam-done", id });
+        await pause(700);
+
+        // 3. Text size: the words are too small to read.
+        scene(2, "mail · inbox", "v-text");
+        $("mail").classList.remove("big");
+        at(orb, 86, 62);
+        await pause(900);
+        await show("You", "I can't read this. The words are too small.", { min: 2600, kind: "you", clip: "text-ask", id });
+        onto(orb, $("mail"), "center");
+        await looking("Checking your display settings…", 1200);
+        orb.classList.remove("busy");
+        await show("Halo", "I'll make the text bigger everywhere on your computer. Okay?", { min: 2400, clip: "text-offer", id });
+        await show("You", "Yes, please.", { min: 1000, kind: "you", clip: "text-yes", id });
+        $("mail").classList.add("big");
+        at(orb, 86, 62);
+        chime();
+        await show("Done", "Done. Everything is bigger now. Tell me if you want it even larger.", { min: 3400, clip: "text-done", id });
+        await pause(900);
       }
     }
     function start() {
       const id = ++run;
       loop(id).catch((e) => { if (e !== STOP) console.error(e); });
     }
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); line.textContent = "Switched to your laptop speakers. You should hear Sam now."; }
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { at(orb, 50, 62); eyebrow.textContent = "Done"; line.textContent = "Switched to your laptop speakers. You should hear Sam now."; }
     else start();
 
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold: 0.12 });
