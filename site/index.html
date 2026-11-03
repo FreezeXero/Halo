@@ -141,6 +141,37 @@
     .ripple { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid var(--gold); z-index: 3; pointer-events: none; animation: ripple 0.6s ease-out forwards; }
     @keyframes ripple { to { transform: scale(5); opacity: 0; } }
     .screen.live { box-shadow: 0 0 0 1px rgba(255, 201, 77, 0.18), 0 30px 90px -20px rgba(255, 201, 77, 0.18); transition: box-shadow 0.6s; }
+    .visit { gap: 18px; padding: 22px 22px 0; }
+    .appt { flex: 1.15; background: #f4f3ef; color: #222; border-radius: 8px; padding: 16px 18px; font-size: 13px; line-height: 1.55; box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
+    .appt p { margin: 0 0 10px; }
+    .appt .link { color: #1a62d6; text-decoration: underline; }
+    .steps-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .card-step { background: #17171b; border: 1px solid var(--hair-2); border-radius: 8px; padding: 10px 14px; font-size: 12.5px; opacity: 0; transform: translateY(8px); transition: opacity 0.5s, transform 0.5s, border-color 0.4s; }
+    .card-step.on { opacity: 1; transform: none; }
+    .card-step.done { border-color: rgba(111, 219, 160, 0.5); }
+    .card-step.done .mono::after { content: "  \2713"; color: #6fdba0; }
+    .card-step b { display: block; font-weight: 600; font-size: 13.5px; margin-top: 2px; }
+    .card-step em { color: var(--ink-2); font-style: normal; }
+    .field { display: flex; gap: 8px; align-items: baseline; margin-top: 6px; }
+    .field i { width: 92px; flex: none; color: var(--ink-3); font-style: normal; }
+    .field u { flex: 1; text-decoration: none; border-bottom: 1px solid var(--hair-2); min-height: 18px; color: var(--ink); }
+    .submit { display: inline-block; margin-top: 10px; padding: 5px 14px; border-radius: 4px; background: #2a2a30; color: var(--ink-2); font-weight: 600; transition: background 0.3s, color 0.3s; }
+    .submit.ready { background: #1a62d6; color: #fff; }
+    .submit.pressed { background: #6fdba0; color: #0b2a19; }
+    .captcha { width: min(380px, 80%); background: #fff; color: #222; border-radius: 6px; border: 1px solid #d5d5d5; box-shadow: 0 20px 50px rgba(0,0,0,0.45); font-size: 14px; overflow: hidden; }
+    .cap-row { display: flex; align-items: center; gap: 12px; padding: 16px; }
+    .cap-box { width: 24px; height: 24px; border: 2px solid #c1c1c1; border-radius: 3px; position: relative; transition: border-color 0.2s; }
+    .cap-box.on { border-color: #1a73e8; }
+    .cap-box.on::after { content: ""; position: absolute; left: 6px; top: 1px; width: 7px; height: 13px; border: solid #1a73e8; border-width: 0 3px 3px 0; transform: rotate(45deg); }
+    .cap-logo { margin-left: auto; color: #8a8a8a; text-transform: lowercase; }
+    .cap-steps { max-height: 0; overflow: hidden; padding: 0 16px; background: #f6f8fc; border-top: 1px solid #e3e6ec; transition: max-height 0.6s, padding 0.6s; }
+    .cap-steps.on { max-height: 200px; padding: 12px 16px 14px; }
+    .cap-steps ol { margin: 6px 0 0; padding-left: 20px; }
+    .cap-steps kbd { font: 600 12px var(--sans); color: #222; border: 1px solid #bbb; border-radius: 3px; padding: 0 5px; background: #fff; }
+    .cap-steps.flagged { background: #fff1ef; text-decoration: line-through; text-decoration-color: #d93025; }
+    .stop-chip { position: absolute; left: 50%; top: 62%; transform: translate(-50%, 8px); padding: 10px 16px; border-radius: 999px; background: #d93025; color: #fff; font-weight: 600; font-size: 14px; white-space: nowrap; opacity: 0; transition: opacity 0.4s, transform 0.4s; box-shadow: 0 10px 30px rgba(217, 48, 37, 0.45); }
+    .stop-chip.on { opacity: 1; transform: translate(-50%, 0); }
+    @media (max-width: 880px) { .visit { flex-direction: column; overflow: auto; } .stop-chip { white-space: normal; text-align: center; width: 80%; } }
     .orb.talk::after { animation-duration: 0.7s; }
     .play { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px 0 16px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.5); background: rgba(10, 10, 11, 0.82); color: var(--ink); font: 500 15px var(--sans); cursor: pointer; box-shadow: 0 0 40px -6px rgba(255, 201, 77, 0.45); backdrop-filter: blur(6px); transition: transform 0.15s, background 0.15s; }
     .play[hidden] { display: none; }
@@ -275,41 +306,49 @@
       <div class="pick reveal" id="pick" role="group" aria-label="Pick a problem to see Halo fix it">
         <div class="mono pick-label">Pick a problem. Halo fixes it.</div>
         <div class="pick-row">
-          <button type="button" class="pick-card" data-scene="0"><span class="mono">01</span><b>"I can't hear my call"</b></button>
-          <button type="button" class="pick-card" data-scene="1"><span class="mono">02</span><b>"A pop-up says I have a virus"</b></button>
+          <button type="button" class="pick-card" data-scene="0"><span class="mono">01</span><b>"Get me ready for my doctor's visit"</b></button>
+          <button type="button" class="pick-card" data-scene="1"><span class="mono">02</span><b>"A website says to prove I'm human"</b></button>
           <button type="button" class="pick-card" data-scene="2"><span class="mono">03</span><b>"The words are too small"</b></button>
         </div>
       </div>
       <div class="screen reveal" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
         <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
         <div class="cam" id="cam">
-        <div class="call view on" id="v-call">
-          <div class="tile">
-            <div class="avatar">S</div>
-            <div class="name">Sam</div>
-            <div class="flag" id="flag">NO AUDIO</div>
-            <div class="wave" id="wave"><b></b><b></b><b></b><b></b></div>
+        <div class="view page visit on" id="v-visit">
+          <div class="appt" id="appt">
+            <div class="mail-from"><b>Harbor Health</b> &middot; Your video visit on Thursday</div>
+            <p>Hi Robert, your video visit with <b>Dr. Patel</b> is on <b>Thursday, Nov 6 at 10:30 AM</b>. Appointment number <b>A-48213</b>.</p>
+            <p>Please <span class="link" id="checkin-link">check in here</span> before your visit. When it's time, <span class="link">join your visit</span>.</p>
           </div>
-          <div class="side">
-            <div class="tile"><div class="avatar">M</div><div class="name">You</div></div>
-            <div class="output" id="output">
-              <span class="mono">Sound output</span>
-              <div class="opt sel" id="o1">Monitor, no speakers</div>
-              <div class="opt" id="o2">Laptop speakers</div>
+          <div class="steps-col">
+            <div class="card-step" id="st-cal">
+              <span class="mono">Calendar</span>
+              <b>Video visit &middot; Dr. Patel</b>
+              <em>Thu, Nov 6 &middot; 10:30 AM &middot; reminder 15 min before</em>
+            </div>
+            <div class="card-step" id="st-form">
+              <span class="mono">Check-in &middot; harborhealth.example</span>
+              <div class="field"><i>Name</i><u data-fill="Robert Hayes"></u></div>
+              <div class="field"><i>Appointment #</i><u data-fill="A-48213"></u></div>
+              <div class="field"><i>Visit</i><u data-fill="Video visit, Dr. Patel"></u></div>
+              <div class="submit" id="submit">Submit</div>
+            </div>
+            <div class="card-step" id="st-zoom">
+              <span class="mono">Zoom</span>
+              <b>Installed and ready</b>
+              <em>Join opens Thursday at 10:25 AM</em>
             </div>
           </div>
         </div>
-        <div class="view page" id="v-scam">
-          <div class="scam" id="scam">
-            <div class="scam-head">&#9888; SECURITY ALERT</div>
-            <div class="scam-body">
-              <h4>Your computer is infected with 5 viruses!</h4>
-              <p>Do not restart your computer. Call PC Security Center now so a technician can remove them.</p>
-              <div class="scam-phone" id="phone">Call now: 1-888-555-0199</div>
-              <div class="scam-btn">Download Remote Support</div>
+        <div class="view page" id="v-click">
+          <div class="captcha" id="captcha">
+            <div class="cap-row"><span class="cap-box" id="cap-box"></span><span>I'm not a robot</span><span class="cap-logo mono">verify</span></div>
+            <div class="cap-steps" id="cap-steps">
+              <b>To finish verifying, please:</b>
+              <ol><li>Press <kbd>Windows</kbd> + <kbd>R</kbd></li><li>Press <kbd>Ctrl</kbd> + <kbd>V</kbd></li><li>Press <kbd>Enter</kbd></li></ol>
             </div>
           </div>
-          <div class="newtab" id="newtab"><span class="mono">New tab</span></div>
+          <div class="stop-chip" id="stop-chip">&#9940; Don't press those keys. This is a scam.</div>
         </div>
         <div class="view page" id="v-text">
           <div class="mail" id="mail">
@@ -440,7 +479,7 @@
     let audio = null;
     // The lines were recorded with Halo's own voice (scripts/site-voice.py), so the page sounds like the app.
     const clips = {};
-    for (const k of ["ask", "found", "offer", "yes", "done", "scam-ask", "scam-warn", "scam-done", "text-ask", "text-offer", "text-yes", "text-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
+    for (const k of ["visit-ask", "visit-plan", "visit-form", "visit-yes", "visit-done", "click-ask", "click-warn", "click-done", "text-ask", "text-offer", "text-yes", "text-done"]) { clips[k] = new Audio(`audio/${k}.mp3`); clips[k].preload = "auto"; }
     let playing = null;
     function speak(key) {
       const clip = clips[key];
@@ -536,52 +575,80 @@
       zoom(null);
     }
 
+    // Types text into a form field, a letter at a time.
+    async function type(el, id) {
+      const text = el.dataset.fill;
+      el.textContent = "";
+      for (const ch of text) { el.textContent += ch; await wait(28); check(id); }
+    }
+
     const SCENES = [
-      // 1. Sound: the call is silent because the sound goes to a monitor.
+      // 1. A doctor's video visit: Halo reads the email, adds it to the calendar, fills the check-in, gets Zoom ready.
       async (id, pause, looking) => {
-        scene(0, "meet · family call", "v-call");
-        at(orb, 50, 62);
-        $("output").classList.remove("lit"); $("o1").classList.add("sel"); $("o2").classList.remove("sel");
-        $("flag").style.opacity = 1; $("wave").style.opacity = 0;
-        await show("You", "The sound thing is broken. I can't hear Sam.", { min: 2400, kind: "you", clip: "ask", id });
-        at(orb, 30, 40);
-        await looking("Checking your call and your sound…", 1300);
-        onto(orb, $("output"), "center"); $("output").classList.add("lit");
-        await show("Halo", "Your call is fine. The sound is going to your monitor, which has no speakers.", { min: 2200, clip: "found", id });
-        orb.classList.remove("busy"); onto(target, $("o2")); target.classList.add("on");
-        zoom($("output"), 1.5);
-        await show("Halo", "I'll switch it to your laptop speakers. Okay?", { min: 2000, clip: "offer", id });
-        await show("You", "Yes.", { min: 900, kind: "you", clip: "yes", id });
-        target.classList.remove("on");
-        await click($("o2"), id);
-        $("o1").classList.remove("sel"); $("o2").classList.add("sel");
-        $("flag").style.opacity = 0; $("wave").style.opacity = 1;
+        scene(0, "mail · inbox", "v-visit");
+        ["st-cal", "st-form", "st-zoom"].forEach((k) => $(k).classList.remove("on", "done"));
+        document.querySelectorAll("#st-form u").forEach((u) => { u.textContent = ""; });
+        $("submit").classList.remove("ready", "pressed");
+        at(orb, 50, 70);
+        await pause(500);
+        await show("You", "My doctor sent me this email. Can you get me ready for the visit?", { min: 3200, kind: "you", clip: "visit-ask", id });
+        zoom($("appt"), 1.25);
+        onto(orb, $("appt"), "center");
+        await looking("Reading the email…", 1200);
+        orb.classList.remove("busy");
+        await show("Halo", "Sure. I'll add it to your calendar, check you in, and get the video call ready.", { min: 2600, clip: "visit-plan", id });
+        zoom(null);
+        $("st-cal").classList.add("on");
+        await pause(700);
+        $("st-cal").classList.add("done");
+        $("url").textContent = "harborhealth.example/check-in";
+        await click($("checkin-link"), id);
+        $("st-form").classList.add("on");
         await pause(500);
         $("cursor").classList.remove("on");
-        at(orb, 50, 62);
-        zoom($("flag").parentElement, 1.2);
-        chime();
-        await show("Done", "Switched to your laptop speakers. You should hear Sam now.", { min: 2600, clip: "done", id });
-      },
-      // 2. Scam: a fake virus warning with a phone number.
-      async (id, pause, looking) => {
-        scene(1, "pc-security-center-alert.com", "v-scam");
-        $("scam").classList.remove("gone"); $("newtab").classList.remove("on"); $("phone").classList.remove("flagged");
-        at(orb, 86, 62);
-        await pause(600);
-        await show("You", "This says my computer has a virus, and I have to call them. Should I?", { min: 3000, kind: "you", clip: "scam-ask", id });
-        onto(orb, $("phone"), "center");
-        await looking("Reading the page…", 1200);
-        orb.classList.remove("busy"); $("phone").classList.add("flagged");
-        zoom($("phone"), 1.45);
-        await show("Stopped a scam", "Don't call. This is a scam. Real warnings never ask you to phone a number.", { min: 3000, clip: "scam-warn", id });
+        zoom($("st-form"), 1.3);
+        onto(orb, $("st-form"), "center");
+        orb.classList.add("busy"); eyebrow.textContent = "Halo is filling in your check-in"; line.textContent = "Name, appointment number, visit…";
+        for (const u of document.querySelectorAll("#st-form u")) await type(u, id);
+        orb.classList.remove("busy");
+        $("submit").classList.add("ready");
+        onto(target, $("submit")); target.classList.add("on");
+        await show("Halo", "I filled in your check-in with the details from the email. Take a look, then press Submit.", { min: 3000, clip: "visit-form", id });
+        await show("You", "Okay. I pressed it.", { min: 1200, kind: "you", clip: "visit-yes", id });
+        target.classList.remove("on");
+        $("submit").classList.add("pressed"); $("submit").textContent = "Checked in";
+        $("st-form").classList.add("done");
         zoom(null);
-        await pause(500);
-        $("scam").classList.add("gone"); $("newtab").classList.add("on");
-        $("url").textContent = "New tab";
-        at(orb, 50, 62);
+        $("st-zoom").classList.add("on");
+        await pause(700);
+        $("st-zoom").classList.add("done");
+        $("url").textContent = "mail · inbox";
+        at(orb, 50, 70);
         chime();
-        await show("Done", "I closed that page. Your computer is fine, and nothing was installed.", { min: 2600, clip: "scam-done", id });
+        await show("Done", "You're all set. It's on your calendar for Thursday at 10:30, and Zoom is ready. I'll remind you 15 minutes before.", { min: 3600, clip: "visit-done", id });
+        $("submit").textContent = "Submit";
+      },
+      // 2. A fake "verify you're human" page that copies a hidden command and asks for Windows+R, Ctrl+V, Enter.
+      async (id, pause, looking) => {
+        scene(1, "secure-verify-check.com", "v-click");
+        $("cap-box").classList.remove("on"); $("cap-steps").classList.remove("on", "flagged"); $("stop-chip").classList.remove("on");
+        at(orb, 86, 70);
+        await pause(700);
+        $("cap-box").classList.add("on");
+        await pause(500);
+        $("cap-steps").classList.add("on");
+        await pause(900);
+        await show("You", "This website says I have to press some keys to prove I'm human. Is that okay?", { min: 3200, kind: "you", clip: "click-ask", id });
+        zoom($("captcha"), 1.3);
+        onto(orb, $("cap-steps"), "center");
+        await looking("Checking the page and your clipboard…", 1200);
+        orb.classList.remove("busy");
+        $("cap-steps").classList.add("flagged"); $("stop-chip").classList.add("on");
+        await show("Stopped a scam", "Stop. Don't press those. That page secretly copied a command, and pasting it would let strangers into your computer.", { min: 4200, clip: "click-warn", id });
+        zoom(null);
+        at(orb, 50, 70);
+        chime();
+        await show("Done", "Nothing was pasted, so your computer is safe. Close this page, and don't come back to it.", { min: 3000, clip: "click-done", id });
       },
       // 3. Text size: the words are too small to read.
       async (id, pause, looking) => {
@@ -623,7 +690,7 @@
     }));
 
     // Before they pick: the call, still, with Halo's one-line pitch in the bar.
-    scene(-1, "meet · family call", "v-call");
+    scene(-1, "mail · inbox", "v-visit");
     at(orb, 50, 62);
     eyebrow.textContent = "Halo"; line.textContent = "Press one key and say what's wrong. I'll take care of it.";
 

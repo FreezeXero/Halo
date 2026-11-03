@@ -30,14 +30,16 @@ const WOMEN = new Set(["sarah", "jessica", "matilda", "lily"]);
 
 // [tags] set the delivery on Eleven v4; they aren't spoken.
 const LINES = {
-  ask: [PERSON, "[confused] The sound thing is broken... I can't hear Sam."],
-  found: [HALO, "Your call is fine. The sound is going to your monitor, which has no speakers."],
-  offer: [HALO, "I'll switch it to your laptop speakers. Okay?"],
-  yes: [PERSON, "Yes."],
-  done: [HALO, "[warmly] Switched to your laptop speakers. You should hear Sam now."],
-  "scam-ask": [PERSON, "[worried] This says my computer has a virus, and I have to call them. Should I?"],
-  "scam-warn": [HALO, "[calmly] Don't call. This is a scam. Real warnings never ask you to phone a number."],
-  "scam-done": [HALO, "I closed that page. Your computer is fine, and nothing was installed."],
+  // 1. A doctor's video visit, from the email: calendar, check-in form, Zoom.
+  "visit-ask": [PERSON, "[unsure] My doctor sent me this email. Can you get me ready for the visit?"],
+  "visit-plan": [HALO, "Sure. I'll add it to your calendar, check you in, and get the video call ready."],
+  "visit-form": [HALO, "I filled in your check-in with the details from the email. Take a look, then press Submit."],
+  "visit-yes": [PERSON, "[relieved] Okay. I pressed it."],
+  "visit-done": [HALO, "[warmly] You're all set. It's on your calendar for Thursday at ten thirty, and Zoom is ready. I'll remind you fifteen minutes before."],
+  // 2. A fake "verify you're human" page that copies a hidden command.
+  "click-ask": [PERSON, "[worried] This website says I have to press some keys to prove I'm human. Is that okay?"],
+  "click-warn": [HALO, "[firmly] Stop. Don't press those. That page secretly copied a command, and pasting it would let strangers into your computer."],
+  "click-done": [HALO, "Nothing was pasted, so your computer is safe. Close this page, and don't come back to it."],
   "text-ask": [PERSON, "[frustrated] I can't read this. The words are too small."],
   "text-offer": [HALO, "I'll make the text bigger everywhere on your computer. Okay?"],
   "text-yes": [PERSON, "Yes, please."],
