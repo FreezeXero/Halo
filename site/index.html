@@ -121,14 +121,23 @@
     .photos i:nth-child(2) { background: linear-gradient(135deg, #b9d39b, #6f9a4d); }
     .photos i:nth-child(3) { background: linear-gradient(135deg, #f2c48d, #d9894a); }
     .pick { margin-top: 72px; }
-    .pick-label { margin-bottom: 12px; }
+    .pick-label { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
+    .pick-label .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); animation: blink 1.6s ease-in-out infinite; }
+    .pick-label em { font-style: normal; color: var(--ink-2); font-weight: 400; font-size: 15px; }
+    @keyframes blink { 50% { opacity: 0.3; } }
     .pick-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .pick-card { text-align: left; padding: 16px 18px; border-radius: 8px; border: 1px solid var(--hair-2); background: var(--raise); color: var(--ink); font: inherit; cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s; }
-    .pick-card:hover { border-color: rgba(255, 201, 77, 0.45); transform: translateY(-1px); }
-    .pick-card.on { border-color: var(--gold); background: rgba(255, 201, 77, 0.07); }
-    .pick-card span { display: block; margin-bottom: 6px; }
-    .pick-card.on span { color: var(--gold); }
-    .pick-card b { font: 400 22px/1.15 var(--serif); }
+    .pick-card { display: flex; align-items: center; gap: 14px; text-align: left; padding: 16px 16px 16px 18px; border-radius: 10px; border: 1px solid rgba(255, 201, 77, 0.28); background: var(--raise); color: var(--ink); font: 500 16px/1.3 var(--sans); cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s, box-shadow 0.2s; }
+    .pick-card:hover { border-color: rgba(255, 201, 77, 0.7); background: #17171a; transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgba(255, 201, 77, 0.45); }
+    .pick-card.on { border-color: var(--gold); background: rgba(255, 201, 77, 0.08); }
+    .pick-card .txt { flex: 1; }
+    .pick-card .num { display: block; margin-bottom: 4px; font: 12px var(--mono); color: var(--ink-3); letter-spacing: 0.04em; }
+    .pick-card.on .num { color: var(--gold); }
+    .pick-card .go { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--gold); position: relative; transition: transform 0.15s; }
+    .pick-card .go::after { content: ""; position: absolute; left: 15px; top: 12px; border-left: 11px solid #1a1405; border-top: 7px solid transparent; border-bottom: 7px solid transparent; }
+    .pick-card:hover .go { transform: scale(1.08); }
+    .pick-card.on .go::after { left: 13px; top: 12px; width: 4px; height: 14px; border: 0; border-left: 4px solid #1a1405; border-right: 4px solid #1a1405; box-sizing: content-box; width: 4px; }
+    .pick-row.nudge .pick-card:first-child { animation: nudge 2.2s ease-in-out infinite; }
+    @keyframes nudge { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 201, 77, 0); } 50% { box-shadow: 0 0 0 4px rgba(255, 201, 77, 0.18), 0 0 30px -6px rgba(255, 201, 77, 0.5); } }
     .pick + .screen { margin-top: 14px; }
     .hint { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); z-index: 4; display: inline-flex; align-items: center; gap: 10px; padding: 12px 20px 12px 14px; border-radius: 999px; border: 1px solid rgba(255, 201, 77, 0.4); background: rgba(10, 10, 11, 0.85); font-size: 15px; color: var(--ink); white-space: nowrap; box-shadow: 0 0 40px -8px rgba(255, 201, 77, 0.4); transition: opacity 0.3s; pointer-events: none; }
     .hint.off { opacity: 0; }
@@ -303,15 +312,15 @@
         </div>
       </div>
 
-      <div class="pick reveal" id="pick" role="group" aria-label="Pick a problem to see Halo fix it">
-        <div class="mono pick-label">Pick a problem. Halo fixes it.</div>
-        <div class="pick-row">
-          <button type="button" class="pick-card" data-scene="0"><span class="mono">01</span><b>"Get me ready for my doctor's visit"</b></button>
-          <button type="button" class="pick-card" data-scene="1"><span class="mono">02</span><b>"A website says to prove I'm human"</b></button>
-          <button type="button" class="pick-card" data-scene="2"><span class="mono">03</span><b>"The words are too small"</b></button>
+      <div class="pick" id="pick" role="group" aria-label="Pick a problem to see Halo fix it">
+        <div class="pick-label"><span class="dot"></span>Watch Halo work <em>Click a problem to play it, with sound</em></div>
+        <div class="pick-row nudge" id="pick-row">
+          <button type="button" class="pick-card" data-scene="0"><span class="txt"><span class="num">01 · DOCTOR'S VISIT</span>"Get me ready for my doctor's visit"</span><span class="go" aria-hidden="true"></span></button>
+          <button type="button" class="pick-card" data-scene="1"><span class="txt"><span class="num">02 · SCAM</span>"A website says to prove I'm human"</span><span class="go" aria-hidden="true"></span></button>
+          <button type="button" class="pick-card" data-scene="2"><span class="txt"><span class="num">03 · QUICK FIX</span>"The words are too small"</span><span class="go" aria-hidden="true"></span></button>
         </div>
       </div>
-      <div class="screen reveal" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
+      <div class="screen" aria-label="Animated examples: Halo fixes the sound on a call, stops a scam, and makes text bigger">
         <div class="chrome"><i></i><i></i><i></i><div class="url" id="url">meet · family call</div><button class="sound-btn" id="sound" type="button">TURN ON SOUND</button></div>
         <div class="cam" id="cam">
         <div class="view page visit on" id="v-visit">
@@ -361,7 +370,7 @@
         <div class="orb" id="orb"></div>
         <svg class="cursor" id="cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2.5v17.2l4.7-4.4 3 6.9 3-1.3-3-6.8h6.5z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>
         </div>
-        <div class="hint" id="hint"><span class="play-icon"></span>Pick a problem above to watch Halo fix it</div>
+        <div class="hint" id="hint"><span class="play-icon"></span>&uarr; Click one of the problems above to play</div>
         <div class="bar">
           <div class="bar-top"><div class="eyebrow" id="eyebrow">Halo is listening</div><div class="voice" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></div></div>
           <div class="line" id="line"></div>
@@ -686,6 +695,7 @@
     }
     document.querySelectorAll(".pick-card").forEach((card) => card.addEventListener("click", () => {
       if (!soundOn) setSound(true); // they clicked, so the browser allows sound now
+      $("pick-row").classList.remove("nudge");
       play(Number(card.dataset.scene));
     }));
 
